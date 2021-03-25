@@ -2,107 +2,45 @@
 
 #include "game/scripting/execution.hpp"
 #include "scripting.hpp"
+#include "game/scripting/lua/engine.hpp"
 
 namespace notifies
 {
 	namespace
 	{
-		/*auto hidden = true;
+		utils::hook::detour client_command_hook;
 
-		int g_say_to;
-		int pre_say;
-
-		char* evaluate_say(char* text, game::gentity_s* ent)
+		void client_command_stub(int clientNum)
 		{
-			hidden = false;
+			char cmd[1024] = { 0 };
 
-			const std::string message = text;
-			const auto client = ent->entity_num;
+			game::SV_Cmd_ArgvBuffer(0, cmd, 1024);
 
-			scheduler::once([message, client]()
+			if (cmd == "say"s)
 			{
-				const scripting::entity level{*game::levelEntityId};
-				const auto player = scripting::call("getEntByNum", {client}).as<scripting::entity>();
+				const std::string message = game::ConcatArgs(1);
 
-				scripting::notify(level, "say", {player, message});
-				scripting::notify(player, "say", {message});
-			});
+				scheduler::once([message, clientNum]()
+				{
+					const scripting::entity level{*game::levelEntityId};
+					const auto player = scripting::call("getEntByNum", {clientNum}).as<scripting::entity>();
 
-			if (text[0] == '/')
-			{
-				hidden = true;
-				++text;
+					scripting::event e;
+					e.arguments.push_back(player);
+					e.arguments.push_back(message);
+					e.entity = level;
+					e.name = "say";
+
+					scripting::lua::engine::notify(e);
+				});
 			}
 
-			return text;
+			return client_command_hook.invoke<void>(clientNum);
 		}
-
-		char* clean_str(const char* str)
-		{
-			return game::I_CleanStr(str);
-		}
-
-		__declspec(naked) void pre_say_stub()
-		{
-			__asm
-			{
-				mov eax, [esp + 0xE4 + 0x10]
-
-				push eax
-				pushad
-
-				push[esp + 0xE4 + 0x28]
-				push eax
-				call evaluate_say
-				add esp, 0x8
-
-				mov[esp + 0x20], eax
-				popad
-				pop eax
-
-				mov[esp + 0xE4 + 0x10], eax
-
-				call clean_str
-
-				push pre_say
-				retn
-			}
-		}
-
-		__declspec(naked) void post_say_stub()
-		{
-			__asm
-			{
-				push eax
-
-				xor eax, eax
-
-				mov al, hidden
-
-				cmp al, 0
-				jne hide
-
-				pop eax
-
-				push g_say_to
-				retn
-			hide:
-				pop eax
-
-				retn
-			}
-		}*/
 	}
 
 	void init()
 	{
-		/*g_say_to = SELECT(0x82BB50, 0x82A3D0);
-		pre_say = SELECT(0x6A7AB3, 0x493E63);
-
-		utils::hook::jump(SELECT(0x6A7AAE, 0x493E5E), pre_say_stub);
-		utils::hook::call(SELECT(0x6A7B5F, 0x493F0F), post_say_stub);
-		utils::hook::call(SELECT(0x6A7B9B, 0x493F4B), post_say_stub);*/
-
-		//utils::hook::nop(SELECT(0x45A32B, 0x4B8D6B), 7);
+		client_command_hook.create(0x502CB0, client_command_stub);
 	}
 }
