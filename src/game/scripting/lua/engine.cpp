@@ -16,18 +16,16 @@ namespace scripting::lua::engine
 
 		std::string get_path()
 		{
-			char* pValue;
-			size_t len;
-			errno_t err = _dupenv_s(&pValue, &len, "LOCALAPPDATA");
+			const auto fs_basegame = game::Dvar_FindVar("fs_basegame");
 
-			return pValue;
+			return fs_basegame->current.string;
 		}
 
 		void load_scripts()
 		{
 			const auto path = get_path();
 
-			const auto script_dir = path + "/Plutonium/storage/iw5/scripts/"s;
+			const auto script_dir = path + "/scripts/"s;
 
 			if (!utils::io::directory_exists(script_dir))
 			{
