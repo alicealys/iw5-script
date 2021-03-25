@@ -21,6 +21,9 @@ namespace scripting
 		return call<script_value>(name, arguments).as<T>();
 	}
 
+	void clear_entity_fields(const entity& entity);
+	void clear_custom_fields();
+
 	void set_entity_field(const entity& entity, const std::string& field, const script_value& value);
 	script_value get_entity_field(const entity& entity, const std::string& field);
 

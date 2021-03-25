@@ -32,6 +32,11 @@ namespace scripting
 					e.arguments.emplace_back(*value);
 				}
 
+				if (e.name == "connected")
+				{
+					scripting::clear_entity_fields(e.entity);
+				}
+
 				lua::engine::notify(e);
 			}
 

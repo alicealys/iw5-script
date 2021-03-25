@@ -140,6 +140,17 @@ namespace scripting::lua
 				return convert(s, entity.call(function, arguments));
 			};
 
+			entity_type[sol::meta_function::new_index] = [](const entity& entity, const std::string& field,
+				const sol::lua_value& value)
+			{
+				entity.set(field, convert(value));
+			};
+
+			entity_type[sol::meta_function::index] = [](const entity& entity, const sol::this_state s, const std::string& field)
+			{
+				return convert(s, entity.get(field));
+			};
+
 			struct game
 			{
 			};
