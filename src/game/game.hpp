@@ -29,8 +29,6 @@ namespace game
 	private:
 		T* dedi_;
 	};
-
-	void Scr_ClearOutParams();
 }
 
 #include "symbols.hpp"
