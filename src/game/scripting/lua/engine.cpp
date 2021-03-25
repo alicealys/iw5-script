@@ -14,23 +14,27 @@ namespace scripting::lua::engine
 			return scripts;
 		}
 
-		std::string get_path()
+		std::string load_path()
 		{
 			const auto fs_basegame = game::Dvar_FindVar("fs_basegame");
 
 			return fs_basegame->current.string;
 		}
 
+		std::string get_path()
+		{
+			static const auto path = load_path();
+
+			return path;
+		}
+
 		void load_scripts()
 		{
+			const auto script_dir = "scripts/"s;
+
 			const auto path = get_path();
 
-			const auto script_dir = path + "/scripts/"s;
-
-			if (!utils::io::directory_exists(script_dir))
-			{
-				return;
-			}
+			std::filesystem::current_path(path);
 
 			const auto scripts = utils::io::list_files(script_dir);
 
