@@ -10,7 +10,7 @@ namespace game
 	WEAK symbol<void(int type, VariableUnion u)> RemoveRefToValue{0x565730};
 
 	WEAK symbol<const char*(int index)> ConcatArgs{0x502150};
-	WEAK symbol<void(int localClientNum, const char* text)> Cbuf_AddText{0x0};
+	WEAK symbol<void(int localClientNum, const char* text)> Cbuf_AddText{0x545680};
 	WEAK symbol<void(const char* cmdName, void(), cmd_function_t* allocedCmd)> Cmd_AddCommandInternal{0x0};
 	WEAK symbol<const char*(int index)> Cmd_Argv{0x0};
 
@@ -29,7 +29,7 @@ namespace game
 	WEAK symbol<unsigned int(const char* str, unsigned int user)> SL_GetString{0x5649E0};
 	WEAK symbol<const char*(unsigned int stringValue)> SL_ConvertToString{0x564270};
 
-	WEAK symbol<void(int clientNum, int type, const char* command)> SV_GameSendServerCommand{0x0};
+	WEAK symbol<void(int clientNum, int type, const char* command)> SV_GameSendServerCommand{0x573220};
 	WEAK symbol<void(int arg, char* buffer, int bufferLength)> SV_Cmd_ArgvBuffer{0x5459F0};
 
 	WEAK symbol<void* (jmp_buf* Buf, int Value)> longjmp{0x7363BC};

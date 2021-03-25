@@ -10,6 +10,8 @@
 #include <utils/string.hpp>
 #include <component\scripting.hpp>
 
+namespace _game = game;
+
 namespace scripting::lua
 {
 	namespace
@@ -140,6 +142,21 @@ namespace scripting::lua
 				return convert(s, entity.call(function, arguments));
 			};
 
+			entity_type["sendservercommand"] = [](const entity& entity, const sol::this_state s, const std::string& command)
+			{
+				const auto client = entity.call("getentitynumber").as<int>();
+
+				_game::SV_GameSendServerCommand(client, 0, command.data());
+			};
+
+			entity_type["tell"] = [](const entity& entity, const sol::this_state s, const std::string& message)
+			{
+				const auto client = entity.call("getentitynumber").as<int>();
+
+				_game::SV_GameSendServerCommand(client, 0, utils::string::va("%c \"%s\"",
+					84, message.data()));
+			};
+
 			entity_type[sol::meta_function::new_index] = [](const entity& entity, const std::string& field,
 				const sol::lua_value& value)
 			{
@@ -196,6 +213,16 @@ namespace scripting::lua
 			                                       const long long milliseconds)
 			{
 				return scheduler.add(callback, milliseconds, false);
+			};
+
+			game_type["executecommand"] = [](const game&, const std::string& command)
+			{
+				_game::Cbuf_AddText(0, command.data());
+			};
+
+			game_type["sendservercommand"] = [](const game&, const int client, const std::string& command)
+			{
+				_game::SV_GameSendServerCommand(client, 0, command.data());
 			};
 		}
 	}
