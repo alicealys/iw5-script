@@ -61,12 +61,7 @@ namespace scripting
 		game::Scr_NotifyId(entity.get_entity_id(), event_id, game::scr_VmPub->inparamcount);*/
 
 		scripting::event e;
-		
-		for (auto i = arguments.rbegin(); i != arguments.rend(); ++i)
-		{
-			e.arguments.push_back(*i);
-		}
-
+		e.arguments = arguments;
 		e.name = event;
 		e.entity = entity;
 

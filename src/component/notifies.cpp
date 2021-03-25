@@ -8,39 +8,26 @@ namespace notifies
 {
 	namespace
 	{
-		utils::hook::detour client_command_hook;
-
-		void client_command_stub(int clientNum)
+		void g_say_stub(game::gentity_s* ent, game::gentity_s* target, int mode, const char* chatText)
 		{
-			char cmd[1024] = { 0 };
+			const std::string message = ++chatText;
+			const auto client = ent->entnum;
 
-			game::SV_Cmd_ArgvBuffer(0, cmd, 1024);
-
-			if (cmd == "say"s)
+			scheduler::once([ent, message, client]()
 			{
-				const std::string message = game::ConcatArgs(1);
+				const scripting::entity level{*game::levelEntityId};
+				const auto player = scripting::call("getEntByNum", {client}).as<scripting::entity>();
 
-				scheduler::once([message, clientNum]()
-				{
-					const scripting::entity level{*game::levelEntityId};
-					const auto player = scripting::call("getEntByNum", {clientNum}).as<scripting::entity>();
+				scripting::notify(level, "say", {player, message});
+				scripting::notify(player, "say", {message});
+			});
 
-					scripting::event e;
-					e.arguments.push_back(player);
-					e.arguments.push_back(message);
-					e.entity = level;
-					e.name = "say";
-
-					scripting::lua::engine::notify(e);
-				});
-			}
-
-			return client_command_hook.invoke<void>(clientNum);
+			reinterpret_cast<void (*)(void*, void*, int, const char*)>(0x502B60)(ent, target, mode, chatText);
 		}
 	}
 
 	void init()
 	{
-		client_command_hook.create(0x502CB0, client_command_stub);
+		utils::hook::call(0x502D49, g_say_stub);
 	}
 }
