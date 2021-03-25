@@ -32,10 +32,7 @@ namespace scripting
 					e.arguments.emplace_back(*value);
 				}
 
-				scheduler::once([e]()
-				{
-					lua::engine::notify(e);
-				});
+				lua::engine::notify(e);
 			}
 
 			vm_notify_hook.invoke<void>(notify_list_owner_id, string_value, top);

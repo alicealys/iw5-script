@@ -18,7 +18,7 @@ namespace scripting
 
 	stack_isolation::~stack_isolation()
 	{
-		game::Scr_ClearOutParams();
+		//game::Scr_ClearOutParams();
 		game::scr_VmPub->inparamcount = this->in_param_count_;
 		game::scr_VmPub->outparamcount = this->out_param_count_;
 		game::scr_VmPub->top = this->top_;

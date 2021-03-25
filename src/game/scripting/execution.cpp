@@ -71,8 +71,7 @@ namespace scripting
 			throw std::runtime_error("Unknown function '" + name + "'");
 		}
 
-		game::Scr_ClearOutParams();
-		//stack_isolation _;
+		stack_isolation _;
 
 		for (auto i = arguments.rbegin(); i != arguments.rend(); ++i)
 		{
