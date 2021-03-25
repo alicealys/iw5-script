@@ -55,6 +55,7 @@ namespace game
 		SCRIPT_FLOAT = 5,
 		SCRIPT_INTEGER = 6,
 		SCRIPT_END = 8,
+		SCRIPT_ARRAY = 22,
 	};
 
 	struct VariableStackBuffer
@@ -128,17 +129,39 @@ namespace game
 		const char* name;
 	};
 
-	struct ObjectVariableValue
-	{
-		unsigned __int16 prev;
-		unsigned __int16 entnum;
-		unsigned int classnum;
-	};
-
 	struct ObjectVariableChildren
 	{
-		unsigned int firstChild;
-		unsigned int lastChild;
+		unsigned __int16 firstChild;
+		unsigned __int16 lastChild;
+	};
+
+	struct ObjectVariableValue_u_f
+	{
+		unsigned __int16 prev;
+		unsigned __int16 next;
+	};
+
+	union ObjectVariableValue_u_o_u
+	{
+		unsigned __int16 size;
+		unsigned __int16 entnum;
+		unsigned __int16 nextEntId;
+		unsigned __int16 self;
+	};
+
+	struct	ObjectVariableValue_u_o
+	{
+		unsigned __int16 refCount;
+		ObjectVariableValue_u_o_u u;
+	};
+
+	union ObjectVariableValue_w
+	{
+		unsigned int type;
+		unsigned int classnum;
+		unsigned int notifyName;
+		unsigned int waitTime;
+		unsigned int parentLocalId;
 	};
 
 	struct ChildVariableValue_u_f
@@ -149,6 +172,7 @@ namespace game
 
 	union ChildVariableValue_u
 	{
+		ChildVariableValue_u_f f;
 		VariableUnion u;
 	};
 
@@ -164,25 +188,35 @@ namespace game
 		unsigned int match;
 	};
 
-	struct ChildVariableValue
+	struct	ChildVariableValue
 	{
 		ChildVariableValue_u u;
-		unsigned int next;
-		char pad[4];
+		unsigned __int16 next;
 		char type;
 		char name_lo;
-		char _pad[2];
 		ChildBucketMatchKeys k;
-		unsigned int nextSibling;
-		unsigned int prevSibling;
+		unsigned __int16 nextSibling;
+		unsigned __int16 prevSibling;
+	};
+
+	union ObjectVariableValue_u
+	{
+		ObjectVariableValue_u_f f;
+		ObjectVariableValue_u_o o;
+	};
+
+	struct ObjectVariableValue
+	{
+		ObjectVariableValue_u u;
+		ObjectVariableValue_w w;
 	};
 
 	struct scrVarGlob_t
 	{
-		ObjectVariableValue* objectVariableValue;
-		__declspec(align(128)) ObjectVariableChildren* objectVariableChildren;
-		__declspec(align(128)) unsigned __int16* childVariableBucket;
-		__declspec(align(128)) ChildVariableValue* childVariableValue;
+		ObjectVariableValue objectVariableValue[36864];
+		ObjectVariableChildren objectVariableChildren[36864];
+		unsigned __int16 childVariableBucket[65536];
+		ChildVariableValue childVariableValue[102400];
 	};
 
 	union DvarValue
