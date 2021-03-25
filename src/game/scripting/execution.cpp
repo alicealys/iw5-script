@@ -2,6 +2,8 @@
 #include "execution.hpp"
 #include "safe_execution.hpp"
 #include "stack_isolation.hpp"
+#include "event.hpp"
+#include "lua/engine.hpp"
 
 #include "component/scripting.hpp"
 
@@ -49,14 +51,26 @@ namespace scripting
 
 	void notify(const entity& entity, const std::string& event, const std::vector<script_value>& arguments)
 	{
-		stack_isolation _;
+		/*stack_isolation _;
 		for (auto i = arguments.rbegin(); i != arguments.rend(); ++i)
 		{
 			push_value(*i);
 		}
 
 		const auto event_id = game::SL_GetString(event.data(), 0);
-		game::Scr_NotifyId(entity.get_entity_id(), event_id, game::scr_VmPub->inparamcount);
+		game::Scr_NotifyId(entity.get_entity_id(), event_id, game::scr_VmPub->inparamcount);*/
+
+		scripting::event e;
+		
+		for (auto i = arguments.rbegin(); i != arguments.rend(); ++i)
+		{
+			e.arguments.push_back(*i);
+		}
+
+		e.name = event;
+		e.entity = entity;
+
+		scripting::lua::engine::notify(e);
 	}
 
 	script_value call_function(const std::string& name, const entity& entity,
