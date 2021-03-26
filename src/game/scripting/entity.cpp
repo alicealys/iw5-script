@@ -85,11 +85,7 @@ namespace scripting
 	{
 		if (this->entity_id_)
 		{
-			game::VariableValue value;
-			value.type = game::SCRIPT_OBJECT;
-			value.u.entityId = this->entity_id_;
-
-			game::AddRefToValue(value.type, value.u);
+			game::AddRefToValue(game::SCRIPT_OBJECT, {static_cast<int>(this->entity_id_)});
 		}
 	}
 
