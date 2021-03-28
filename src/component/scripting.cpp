@@ -1,4 +1,6 @@
 #include <stdinc.hpp>
+#include "loader/component_loader.hpp"
+#include "scheduler.hpp"
 
 #include "game/scripting/event.hpp"
 #include "game/scripting/execution.hpp"
@@ -68,17 +70,23 @@ namespace scripting
 		}
 	}
 
-	void init()
+	class component final : public component_interface
 	{
-		scr_load_level_hook.create(0x527AF0, scr_load_level_stub);
-		g_shutdown_game_hook.create(0x50C100, g_shutdown_game_stub);
-
-		scr_add_class_field_hook.create(0x567CD0, scr_add_class_field_stub);
-		vm_notify_hook.create(0x569720, vm_notify_stub);
-
-		scheduler::loop([]()
+	public:
+		void post_unpack() override
 		{
-			lua::engine::run_frame();
-		});
-	}
+			scr_load_level_hook.create(0x527AF0, scr_load_level_stub);
+			g_shutdown_game_hook.create(0x50C100, g_shutdown_game_stub);
+
+			scr_add_class_field_hook.create(0x567CD0, scr_add_class_field_stub);
+			vm_notify_hook.create(0x569720, vm_notify_stub);
+
+			scheduler::loop([]()
+			{
+				lua::engine::run_frame();
+			});
+		}
+	};
 }
+
+REGISTER_COMPONENT(scripting::component)

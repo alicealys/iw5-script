@@ -2,6 +2,8 @@
 #include "engine.hpp"
 #include "context.hpp"
 
+#include "../../../component/notifies.hpp"
+
 #include <utils/io.hpp>
 
 namespace scripting::lua::engine
@@ -56,6 +58,7 @@ namespace scripting::lua::engine
 
 	void stop()
 	{
+		notifies::clear_callbacks();
 		get_scripts().clear();
 	}
 

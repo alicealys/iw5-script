@@ -6,9 +6,10 @@
 #include "../execution.hpp"
 #include "../functions.hpp"
 
+#include "../../../component/scripting.hpp"
+#include "../../../component/notifies.hpp"
 
 #include <utils/string.hpp>
-#include <component\scripting.hpp>
 
 namespace _game = game;
 
@@ -223,6 +224,16 @@ namespace scripting::lua
 			game_type["sendservercommand"] = [](const game&, const int client, const std::string& command)
 			{
 				_game::SV_GameSendServerCommand(client, 0, command.data());
+			};
+
+			game_type["onplayerdamage"] = [](const game&, const sol::protected_function& callback)
+			{
+				notifies::add_player_damage_callback(callback);
+			};
+
+			game_type["onplayerkilled"] = [](const game&, const sol::protected_function& callback)
+			{
+				notifies::add_player_killed_callback(callback);
 			};
 		}
 	}

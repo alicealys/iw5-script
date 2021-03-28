@@ -1,4 +1,5 @@
 #include <stdinc.hpp>
+#include "loader/component_loader.hpp"
 
 namespace scheduler
 {
@@ -69,8 +70,14 @@ namespace scheduler
 		}, delay);
 	}
 
-	void init()
+	class component final : public component_interface
 	{
-		utils::hook::call(0x50CEDC, server_frame);
-	}
+	public:
+		void post_unpack() override
+		{
+			utils::hook::call(0x50CEDC, server_frame);
+		}
+	};
 }
+
+REGISTER_COMPONENT(scheduler::component)
