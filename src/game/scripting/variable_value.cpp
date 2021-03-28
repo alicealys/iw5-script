@@ -54,13 +54,14 @@ namespace scripting
 	void variable_value::assign(const game::VariableValue& value)
 	{
 		this->value_ = value;
+		game::AddRefToValue(this->value_.type, this->value_.u);
 	}
 
 	void variable_value::release()
 	{
 		if (this->value_.type != game::SCRIPT_NONE)
 		{
-			//game::RemoveRefToValue(this->value_.type, this->value_.u);
+			game::RemoveRefToValue(this->value_.type, this->value_.u);
 			this->value_.type = game::SCRIPT_NONE;
 		}
 	}

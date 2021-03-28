@@ -57,6 +57,11 @@ namespace scripting
 		variable.type = game::SCRIPT_STRING;
 		variable.u.stringValue = game::SL_GetString(value, 0);
 
+		const auto _ = gsl::finally([&variable]()
+		{
+			game::RemoveRefToValue(variable.type, variable.u);
+		});
+
 		this->value_ = variable;
 	}
 
@@ -78,8 +83,12 @@ namespace scripting
 	{
 		game::VariableValue variable{};
 		variable.type = game::SCRIPT_VECTOR;
-
 		variable.u.vectorValue = game::Scr_AllocVector(value);
+
+		const auto _ = gsl::finally([&variable]()
+		{
+			game::RemoveRefToValue(variable.type, variable.u);
+		});
 
 		this->value_ = variable;
 	}

@@ -24,6 +24,7 @@
 
 using namespace std::literals;
 
+#include <gsl/gsl>
 #include <MinHook.h>
 
 #include "utils/memory.hpp"

@@ -22,6 +22,8 @@ namespace scripting
 		{
 			auto* value_ptr = allocate_argument();
 			*value_ptr = value.get_raw();
+
+			game::AddRefToValue(value_ptr->type, value_ptr->u);
 		}
 
 		script_value get_return_value()
@@ -188,6 +190,11 @@ namespace scripting
 			{
 				throw std::runtime_error("Failed to get value for field '" + field + "'");
 			}
+
+			const auto __ = gsl::finally([value]()
+			{
+				game::RemoveRefToValue(value.type, value.u);
+			});
 
 			return value;
 		}
