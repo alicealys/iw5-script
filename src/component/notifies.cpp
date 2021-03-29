@@ -157,7 +157,8 @@ namespace notifies
 
 			if (cmd == "say"s)
 			{
-				const auto message = game::ConcatArgs(1);
+				std::string message = game::ConcatArgs(1);
+				message.erase(0, 1);
 
 				scheduler::once([message, clientNum]()
 				{

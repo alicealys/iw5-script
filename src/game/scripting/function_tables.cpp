@@ -132,7 +132,7 @@ namespace scripting
 		{"getnotetracktimes", 84},
 		{"spawn", 85},
 		{"spawnloopsound", 86},
-		{"bullettrace", 87},
+		{"bullettrace", 88},
 		{"bullettracepassed", 88},
 		{"sighttracepassed", 116},
 		{"physicstrace", 117},
