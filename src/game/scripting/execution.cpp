@@ -49,25 +49,50 @@ namespace scripting
 
 			return -1;
 		}
+
+		void scr_notify_id(int id, unsigned int stringValue, unsigned int paramcount)
+		{
+			if (game::scr_VmPub->outparamcount)
+			{
+				game::Scr_ClearOutParams();
+			}
+
+			auto v6 = game::scr_VmPub->top;
+			auto v7 = game::scr_VmPub->inparamcount - paramcount;
+			auto v8 = game::scr_VmPub->top;
+
+			if (id)
+			{
+				const auto v9 = v8->type;
+				v8->type = game::scriptType_e::SCRIPT_END;
+
+				game::scr_VmPub->inparamcount = 0;
+				game::VM_Notify(id, stringValue, game::scr_VmPub->top);
+
+				v8->type = v9;
+				v6 = game::scr_VmPub->top;
+			}
+
+			for (; v6 != v8; game::scr_VmPub->top = v6)
+			{
+				game::RemoveRefToValue(v6->type, v6->u);
+				v6 = game::scr_VmPub->top - 1;
+			}
+
+			game::scr_VmPub->inparamcount = v7;
+		}
 	}
 
 	void notify(const entity& entity, const std::string& event, const std::vector<script_value>& arguments)
 	{
-		/*stack_isolation _;
+		stack_isolation _;
 		for (auto i = arguments.rbegin(); i != arguments.rend(); ++i)
 		{
 			push_value(*i);
 		}
 
 		const auto event_id = game::SL_GetString(event.data(), 0);
-		game::Scr_NotifyId(entity.get_entity_id(), event_id, game::scr_VmPub->inparamcount);*/
-
-		scripting::event e;
-		e.arguments = arguments;
-		e.name = event;
-		e.entity = entity;
-
-		scripting::lua::engine::notify(e);
+		scr_notify_id(entity.get_entity_id(), event_id, game::scr_VmPub->inparamcount);
 	}
 
 	script_value call_function(const std::string& name, const entity& entity,
