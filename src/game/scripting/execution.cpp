@@ -59,7 +59,7 @@ namespace scripting
 
 			auto v6 = game::scr_VmPub->top;
 			auto v7 = game::scr_VmPub->inparamcount - paramcount;
-			auto v8 = game::scr_VmPub->top;
+			auto v8 = &game::scr_VmPub->top[-paramcount];
 
 			if (id)
 			{
