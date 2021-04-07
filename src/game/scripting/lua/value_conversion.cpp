@@ -108,6 +108,35 @@ namespace scripting::lua
 
 			return {state, table};
 		}
+
+		bool is_istring(const sol::lua_value& value)
+		{
+			if (!value.is<std::string>())
+			{
+				return false;
+			}
+
+			const auto str = value.as<std::string>();
+
+			return str[0] == '&';
+		}
+
+		script_value string_to_istring(const sol::lua_value& value)
+		{
+			const auto str = value.as<std::string>().erase(0, 1);
+			const auto string_value = game::SL_GetString(str.data(), 0);
+
+			game::VariableValue variable{};
+			variable.type = game::SCRIPT_ISTRING;
+			variable.u.uintValue = string_value;
+
+			const auto _ = gsl::finally([&variable]()
+			{
+				game::RemoveRefToValue(variable.type, variable.u);
+			});
+
+			return script_value(variable);
+		}
 	}
 
 	script_value convert(const sol::lua_value& value)
@@ -135,6 +164,11 @@ namespace scripting::lua
 		if (value.is<float>())
 		{
 			return {value.as<float>()};
+		}
+
+		if (is_istring(value))
+		{
+			return string_to_istring(value);
 		}
 
 		if (value.is<std::string>())
