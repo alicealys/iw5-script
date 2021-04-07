@@ -163,10 +163,15 @@ namespace notifies
 				scheduler::once([message, clientNum]()
 				{
 					const scripting::entity level{*game::levelEntityId};
-					const auto player = scripting::call("getEntByNum", {clientNum}).as<scripting::entity>();
+					const auto _player = scripting::call("getEntByNum", {clientNum});
 
-					scripting::notify(level, "say", {player, message});
-					scripting::notify(player, "say", {message});
+					if (_player.get_raw().type == game::SCRIPT_OBJECT)
+					{
+						const auto player = _player.as<scripting::entity>();
+
+						scripting::notify(level, "say", {player, message});
+						scripting::notify(player, "say", {message});
+					}
 				});
 			}
 
