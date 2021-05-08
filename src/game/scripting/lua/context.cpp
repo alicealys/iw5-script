@@ -145,14 +145,14 @@ namespace scripting::lua
 			{
 				const auto client = entity.call("getentitynumber").as<int>();
 
-				_game::SV_GameSendServerCommand(client, 0, command.data());
+				::game::SV_GameSendServerCommand(client, 0, command.data());
 			};
 
 			entity_type["tell"] = [](const entity& entity, const sol::this_state s, const std::string& message)
 			{
 				const auto client = entity.call("getentitynumber").as<int>();
 
-				_game::SV_GameSendServerCommand(client, 0, utils::string::va("%c \"%s\"",
+				::game::SV_GameSendServerCommand(client, 0, utils::string::va("%c \"%s\"",
 					84, message.data()));
 			};
 
