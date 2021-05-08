@@ -21,12 +21,15 @@ namespace game
 	WEAK symbol<char*(const char*)> I_CleanStr{0x0};
 
 	WEAK symbol<VariableValue(unsigned int classnum, int entnum, int offset)> GetEntityFieldValue{0x56AF20};
+	WEAK symbol<unsigned int(unsigned int parentId, unsigned int name)> GetVariable{0x5663E0};
 
 	WEAK symbol<const float* (const float* v)> Scr_AllocVector{0x565680};
 	WEAK symbol<void()> Scr_ClearOutParams{0x569010};
 	WEAK symbol<scr_entref_t(unsigned int entId)> Scr_GetEntityIdRef{0x565F60};
 	WEAK symbol<void(unsigned int classnum, int entnum, int offset)> Scr_SetObjectField{0x52BCC0};
 	WEAK symbol<void(int id, unsigned int stringValue, unsigned int paramcount)> Scr_NotifyId{0x56B5E0};
+	WEAK symbol<int(const char* filename, unsigned int str)> Scr_GetFunctionHandle{0x5618A0};
+	WEAK symbol<unsigned int(int handle, unsigned int objId, unsigned int paramcount)> Scr_ExecThreadInternal{0x56E1C0};
 
 	WEAK symbol<unsigned int(const char* str, unsigned int user)> SL_GetString{0x5649E0};
 	WEAK symbol<const char*(unsigned int stringValue)> SL_ConvertToString{0x564270};

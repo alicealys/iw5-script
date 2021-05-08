@@ -1,5 +1,6 @@
 #include <stdinc.hpp>
 #include "value_conversion.hpp"
+#include "../functions.hpp"
 
 namespace scripting::lua
 {
@@ -139,6 +140,59 @@ namespace scripting::lua
 		}
 	}
 
+	sol::lua_value entity_to_struct(lua_State* state, unsigned int parent_id)
+	{
+		auto table = sol::table::create(state);
+		auto metatable = sol::table::create(state);
+
+		metatable[sol::meta_function::new_index] = [parent_id](const sol::table t, const sol::this_state s,
+			const std::string& field, const sol::lua_value& value)
+		{
+			const auto id = scripting::find_token_id(field);
+
+			if (id == -1)
+			{
+				return;
+			}
+
+			const auto offset = 51200 * (parent_id & 1);
+
+			const auto variable_id = game::GetVariable(parent_id, id);
+			const auto variable = &game::scr_VarGlob->childVariableValue[variable_id + offset];
+
+			const auto new_variable = convert({s, value}).get_raw();
+
+			variable->type = new_variable.type;
+			variable->u.u = new_variable.u;
+		};
+
+		metatable[sol::meta_function::index] = [parent_id](const sol::table t, const sol::this_state s,
+			const std::string& field)
+		{
+			const auto id = scripting::find_token_id(field);
+
+			if (id == -1)
+			{
+				return sol::lua_value{ s };
+			}
+
+			const auto offset = 51200 * (parent_id & 1);
+
+			const auto variable_id = game::GetVariable(parent_id, id);
+			const auto variable = game::scr_VarGlob->childVariableValue[variable_id + offset];
+
+			game::VariableValue result{};
+			result.u = variable.u.u;
+			result.type = (game::scriptType_e)variable.type;
+
+			return convert(s, result);
+		};
+
+		table[sol::metatable_key] = metatable;
+
+		return { state, table };
+	}
+
 	script_value convert(const sol::lua_value& value)
 	{
 		if (value.is<int>())
@@ -206,6 +260,11 @@ namespace scripting::lua
 			return {state, value.as<std::string>()};
 		}
 		
+		if (value.is<std::map<std::string, script_value>>())
+		{
+			return entity_to_struct(state, value.get_raw().u.uintValue);
+		}
+
 		if (value.is<std::vector<script_value>>())
 		{
 			return entity_to_array(state, value.get_raw().u.uintValue);

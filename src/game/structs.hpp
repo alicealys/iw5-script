@@ -77,6 +77,7 @@ namespace game
 		SCRIPT_FLOAT = 5,
 		SCRIPT_INTEGER = 6,
 		SCRIPT_END = 8,
+		SCRIPT_STRUCT = 19,
 		SCRIPT_ARRAY = 22,
 	};
 

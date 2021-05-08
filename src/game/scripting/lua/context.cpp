@@ -11,8 +11,6 @@
 
 #include <utils/string.hpp>
 
-namespace _game = game;
-
 namespace scripting::lua
 {
 	namespace
@@ -169,6 +167,13 @@ namespace scripting::lua
 				return convert(s, entity.get(field));
 			};
 
+			entity_type["getstruct"] = [](const entity& entity, const sol::this_state s)
+			{
+				const auto id = entity.get_entity_id();
+
+				return scripting::lua::entity_to_struct(s, id);
+			};
+
 			struct game
 			{
 			};
@@ -218,12 +223,12 @@ namespace scripting::lua
 
 			game_type["executecommand"] = [](const game&, const std::string& command)
 			{
-				_game::Cbuf_AddText(0, command.data());
+				::game::Cbuf_AddText(0, command.data());
 			};
 
 			game_type["sendservercommand"] = [](const game&, const int client, const std::string& command)
 			{
-				_game::SV_GameSendServerCommand(client, 0, command.data());
+				::game::SV_GameSendServerCommand(client, 0, command.data());
 			};
 
 			game_type["onplayerdamage"] = [](const game&, const sol::protected_function& callback)

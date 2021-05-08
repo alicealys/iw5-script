@@ -224,6 +224,24 @@ namespace scripting
 	}
 
 	/***************************************************************
+	 * Struct
+	 **************************************************************/
+
+	template <>
+	bool script_value::is<std::map<std::string, script_value>>() const
+	{
+		if (this->get_raw().type != game::SCRIPT_OBJECT)
+		{
+			return false;
+		}
+
+		const auto id = this->get_raw().u.uintValue;
+		const auto type = game::scr_VarGlob->objectVariableValue[id].w.type;
+
+		return type == game::SCRIPT_STRUCT;
+	}
+
+	/***************************************************************
 	 * Vector
 	 **************************************************************/
 
