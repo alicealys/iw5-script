@@ -145,58 +145,20 @@ namespace scripting::lua
 		auto table = sol::table::create(state);
 		auto metatable = sol::table::create(state);
 
-		const auto offset = 0xC800 * (parent_id & 1);
-
-		auto current = game::scr_VarGlob->objectVariableChildren[parent_id].firstChild;
-		auto idx = 1;
-
-		std::vector<unsigned int> indexes;
-
-		for (auto i = offset + current; current; i = offset + current)
+		metatable[sol::meta_function::new_index] = [parent_id](const sol::table t, const sol::this_state s,
+			const std::string& field, const sol::lua_value& value)
 		{
-			const auto var = game::scr_VarGlob->childVariableValue[i];
+			const auto id = scripting::find_token_id(field);
 
-			if (var.type == game::SCRIPT_NONE)
+			if (id == -1)
 			{
-				current = var.nextSibling;
-				continue;
+				return;
 			}
 
-			indexes.push_back(i);
+			const auto offset = 51200 * (parent_id & 1);
 
-			current = var.nextSibling;
-		}
-
-		metatable[sol::meta_function::new_index] = [offset, indexes, parent_id](const sol::table t, const sol::this_state s,
-			const sol::lua_value& field, const sol::lua_value& value)
-		{
-			auto variable_id = 0;
-
-			if (field.is<std::string>())
-			{
-				const auto name = field.as<std::string>();
-				const auto id = scripting::find_token_id(name);
-
-				if (id == -1)
-				{
-					return;
-				}
-
-				variable_id = game::GetVariable(parent_id, id) + offset;
-			}
-			else
-			{
-				const auto index = field.as<int>();
-
-				if (index > indexes.size())
-				{
-					return;
-				}
-
-				variable_id = indexes[index - 1];
-			}
-
-			const auto variable = &game::scr_VarGlob->childVariableValue[variable_id];
+			const auto variable_id = game::GetVariable(parent_id, id);
+			const auto variable = &game::scr_VarGlob->childVariableValue[variable_id + offset];
 
 			const auto new_variable = convert({s, value}).get_raw();
 
@@ -204,35 +166,20 @@ namespace scripting::lua
 			variable->u.u = new_variable.u;
 		};
 
-		metatable[sol::meta_function::index] = [offset, indexes, parent_id](const sol::table t, const sol::this_state s,
-			const sol::lua_value& field)
+		metatable[sol::meta_function::index] = [parent_id](const sol::table t, const sol::this_state s,
+			const std::string& field)
 		{
-			auto variable_id = 0;
+			const auto id = scripting::find_token_id(field);
 
-			if (field.is<std::string>())
+			if (id == -1)
 			{
-				const auto id = scripting::find_token_id(field.as<std::string>());
-
-				if (id == -1)
-				{
-					return sol::lua_value{s};
-				}
-
-				variable_id = game::GetVariable(parent_id, id) + offset;
-			}
-			else
-			{
-				const auto index = field.as<int>();
-
-				if (index > indexes.size())
-				{
-					return sol::lua_value{s};
-				}
-
-				variable_id = indexes[index - 1];
+				return sol::lua_value{ s };
 			}
 
-			const auto variable = game::scr_VarGlob->childVariableValue[variable_id];
+			const auto offset = 51200 * (parent_id & 1);
+
+			const auto variable_id = game::GetVariable(parent_id, id);
+			const auto variable = game::scr_VarGlob->childVariableValue[variable_id + offset];
 
 			game::VariableValue result{};
 			result.u = variable.u.u;
@@ -241,14 +188,9 @@ namespace scripting::lua
 			return convert(s, result);
 		};
 
-		metatable[sol::meta_function::length] = [indexes]()
-		{
-			return indexes.size();
-		};
-
 		table[sol::metatable_key] = metatable;
 
-		return {state, table};
+		return { state, table };
 	}
 
 	script_value convert(const sol::lua_value& value)
