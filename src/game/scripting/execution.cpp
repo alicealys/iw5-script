@@ -136,29 +136,6 @@ namespace scripting
 		return call_function(name, arguments);
 	}
 
-	void call_script_function(const std::string& filename, const std::string& function, 
-		const entity& entity, const std::vector<script_value>& arguments)
-	{
-		const auto token_id = scripting::find_token_id(function);
-		if (token_id == -1)
-		{
-			return;
-		}
-
-		const auto handle = game::Scr_GetFunctionHandle(filename.data(), token_id);
-		if (!handle)
-		{
-			return;
-		}
-
-		for (auto i = arguments.rbegin(); i != arguments.rend(); ++i)
-		{
-			scripting::push_value(*i);
-		}
-
-		game::Scr_ExecThreadInternal(handle, entity.get_entity_id(), arguments.size());
-	}
-
 	static std::unordered_map<unsigned int, std::unordered_map<std::string, script_value>> custom_fields;
 
 	script_value get_custom_field(const entity& entity, const std::string& field)
