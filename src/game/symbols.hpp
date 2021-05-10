@@ -7,6 +7,8 @@ namespace game
 	// Functions
 
 	WEAK symbol<void(int type, VariableUnion u)> AddRefToValue{0x5656E0};
+	WEAK symbol<void(unsigned int id)> AddReftoObject{0x5655F0};
+	WEAK symbol<unsigned int(unsigned int id)> AllocThread{0x565580};
 	WEAK symbol<void(int type, VariableUnion u)> RemoveRefToValue{0x565730};
 
 	WEAK symbol<void(unsigned int weapon, bool isAlternate, char* output, unsigned int maxStringLen)> BG_GetWeaponNameComplete{0x42F760};
@@ -38,6 +40,7 @@ namespace game
 	WEAK symbol<void(int arg, char* buffer, int bufferLength)> SV_Cmd_ArgvBuffer{0x5459F0};
 
 	WEAK symbol<void(unsigned int notifyListOwnerId, unsigned int stringValue, VariableValue* top)> VM_Notify{0x569720};
+	WEAK symbol<unsigned int(unsigned int localId, const char* pos, unsigned int paramcount)> VM_Execute{0x56DFE0};
 
 	WEAK symbol<void* (jmp_buf* Buf, int Value)> longjmp{0x7363BC};
 	WEAK symbol<int(jmp_buf* Buf)> _setjmp{0x734CF8};

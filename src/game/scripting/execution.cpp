@@ -6,6 +6,7 @@
 #include "lua/engine.hpp"
 
 #include "component/scripting.hpp"
+#include "component/scheduler.hpp"
 
 namespace scripting
 {
@@ -134,6 +135,29 @@ namespace scripting
 	script_value call(const std::string& name, const std::vector<script_value>& arguments)
 	{
 		return call_function(name, arguments);
+	}
+
+	void exec_ent_thread(const entity& entity, const char* pos, const std::vector<script_value>& arguments)
+	{
+		scheduler::once([pos, entity, arguments]()
+		{
+			const auto id = entity.get_entity_id();
+
+			for (auto i = arguments.rbegin(); i != arguments.rend(); ++i)
+			{
+				scripting::push_value(*i);
+			}
+
+			game::AddReftoObject(id);
+			const auto local_id = game::AllocThread(id);
+
+			const auto result = game::VM_Execute(local_id, pos, arguments.size());
+
+			game::RemoveRefToValue(game::scr_VmPub->top->type, game::scr_VmPub->top->u);
+			game::scr_VmPub->top->type = (game::scriptType_e)0;
+			--game::scr_VmPub->top;
+			--game::scr_VmPub->inparamcount;
+		});
 	}
 
 	static std::unordered_map<unsigned int, std::unordered_map<std::string, script_value>> custom_fields;
