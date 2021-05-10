@@ -23,6 +23,8 @@ namespace game
 	WEAK symbol<char*(const char*)> I_CleanStr{0x0};
 
 	WEAK symbol<VariableValue(unsigned int classnum, int entnum, int offset)> GetEntityFieldValue{0x56AF20};
+	WEAK symbol<unsigned int(unsigned int parentId, unsigned int name)> FindVariable{0x5651F0};
+	WEAK symbol<unsigned int(unsigned int parentId, unsigned int name)> FindObject{0x565BD0};
 	WEAK symbol<unsigned int(unsigned int parentId, unsigned int name)> GetVariable{0x5663E0};
 
 	WEAK symbol<const float* (const float* v)> Scr_AllocVector{0x565680};

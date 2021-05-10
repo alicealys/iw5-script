@@ -137,27 +137,49 @@ namespace scripting
 		return call_function(name, arguments);
 	}
 
-	void exec_ent_thread(const entity& entity, const char* pos, const std::vector<script_value>& arguments)
+	script_value exec_ent_thread(const entity& entity, const char* pos, const std::vector<script_value>& arguments)
 	{
-		scheduler::once([pos, entity, arguments]()
+		const auto id = entity.get_entity_id();
+
+		for (auto i = arguments.rbegin(); i != arguments.rend(); ++i)
 		{
-			const auto id = entity.get_entity_id();
+			scripting::push_value(*i);
+		}
 
-			for (auto i = arguments.rbegin(); i != arguments.rend(); ++i)
-			{
-				scripting::push_value(*i);
-			}
+		game::AddReftoObject(id);
 
-			game::AddReftoObject(id);
-			const auto local_id = game::AllocThread(id);
+		const auto local_id = game::AllocThread(id);
+		const auto result = game::VM_Execute(local_id, pos, arguments.size());
 
-			const auto result = game::VM_Execute(local_id, pos, arguments.size());
+		const auto value = get_return_value();
 
-			game::RemoveRefToValue(game::scr_VmPub->top->type, game::scr_VmPub->top->u);
-			game::scr_VmPub->top->type = (game::scriptType_e)0;
-			--game::scr_VmPub->top;
-			--game::scr_VmPub->inparamcount;
-		});
+		game::RemoveRefToValue(game::scr_VmPub->top->type, game::scr_VmPub->top->u);
+		game::scr_VmPub->top->type = (game::scriptType_e)0;
+
+		--game::scr_VmPub->top;
+		--game::scr_VmPub->inparamcount;
+
+		return value;
+	}
+
+	script_value call_script_function(const entity& entity, const std::string& filename,
+		const std::string& function, const std::vector<script_value>& arguments)
+	{
+		if (scripting::script_function_table.find(filename) == scripting::script_function_table.end())
+		{
+			throw std::runtime_error("File '" + filename + "' not found");
+		};
+
+		const auto functions = scripting::script_function_table[filename];
+
+		if (functions.find(function) == functions.end())
+		{
+			throw std::runtime_error("Function '" + function + "' in file '" + filename + "' not found");
+		}
+
+		const auto pos = functions.at(function);
+
+		return exec_ent_thread(entity, pos, arguments);
 	}
 
 	static std::unordered_map<unsigned int, std::unordered_map<std::string, script_value>> custom_fields;

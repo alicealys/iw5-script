@@ -6,6 +6,7 @@ namespace scripting
 	extern std::unordered_map<std::string, unsigned> method_map;
 	extern std::unordered_map<std::string, unsigned> function_map;
 	extern std::unordered_map<std::string, unsigned> token_map;
+	extern std::unordered_map<unsigned, std::string> file_list;
 
 	using script_function = void(*)(game::scr_entref_t);
 

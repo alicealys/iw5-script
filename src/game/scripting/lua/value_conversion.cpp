@@ -156,7 +156,7 @@ namespace scripting::lua
 					arguments.push_back(convert({s, arg}));
 				}
 
-				scripting::exec_ent_thread(entity, pos, arguments);
+				return convert(s, scripting::exec_ent_thread(entity, pos, arguments));
 			};
 		}
 	}

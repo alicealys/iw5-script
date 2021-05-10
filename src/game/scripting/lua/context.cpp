@@ -174,6 +174,19 @@ namespace scripting::lua
 				return scripting::lua::entity_to_struct(s, id);
 			};
 
+			entity_type["scriptcall"] = [](const entity& entity, const sol::this_state s, const std::string& filename,
+				const std::string function, sol::variadic_args va)
+			{
+				std::vector<script_value> arguments{};
+
+				for (auto arg : va)
+				{
+					arguments.push_back(convert({s, arg}));
+				}
+
+				return convert(s, scripting::call_script_function(entity, filename, function, arguments));
+			};
+
 			struct game
 			{
 			};
