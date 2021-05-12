@@ -10,6 +10,8 @@
 
 namespace notifies
 {
+	std::vector<sol::protected_function> vm_execute_hooks;
+
 	namespace
 	{
 		utils::hook::detour client_command_hook;
@@ -177,6 +179,90 @@ namespace notifies
 
 			return client_command_hook.invoke<void>(clientNum);
 		}
+
+		unsigned int local_id_to_entity(unsigned int local_id)
+		{
+			const auto variable = game::scr_VarGlob->objectVariableValue[local_id];
+			return variable.u.f.next;
+		}
+
+		bool execute_vm_hook(unsigned int pos)
+		{
+			if (pos > vm_execute_hooks.size())
+			{
+				return false;
+			}
+
+			const auto hook = vm_execute_hooks[pos];
+			const auto state = hook.lua_state();
+
+			const auto self_id = local_id_to_entity(game::scr_VmPub->function_frame->fs.localId);
+			const auto self = scripting::entity(self_id);
+
+			std::vector<sol::lua_value> args;
+
+			for (auto* value = &game::scr_VmPub->top[1]; value->type != game::SCRIPT_END; --value)
+			{
+				args.push_back(scripting::lua::convert(state, *value));	
+			}
+
+			const auto value = scripting::lua::convert({state, hook(self, sol::as_args(args))});
+
+			game::Scr_ClearOutParams();
+
+			if (value.get_raw().type)
+			{
+				scripting::push_value(value);
+			}
+
+			return true;
+		}
+
+		__declspec(naked) void vm_execute_stub()
+		{
+			__asm
+			{
+				pushad
+				push esi
+				call execute_vm_hook
+				cmp al, 0
+				jne op_return
+
+				pop esi
+				popad
+
+				movzx eax, byte ptr[esi]
+				inc esi
+
+				jmp loc_1
+			loc_1:
+				mov [ebp - 0x18], eax
+				mov [ebp - 0x8], esi
+
+				push ecx
+
+				mov ecx, 0x20B8E28
+				mov [ecx], eax
+
+				mov ecx, 0x20B4A5C
+				mov[ecx], esi
+
+				pop ecx
+
+				cmp eax, 0x98
+
+				push 0x56B740
+				retn
+
+			op_return:
+				pop esi
+				popad
+
+				mov eax, 1
+
+				jmp loc_1
+			}
+		}
 	}
 
 	void add_player_damage_callback(const sol::protected_function& callback)
@@ -191,6 +277,7 @@ namespace notifies
 
 	void clear_callbacks()
 	{
+		vm_execute_hooks.clear();
 		player_damage_callbacks.clear();
 		player_killed_callbacks.clear();
 	}
@@ -204,6 +291,8 @@ namespace notifies
 
 			scr_player_damage_hook.create(0x527B90, scr_player_damage_stub);
 			scr_player_killed_hook.create(0x527CF0, scr_player_killed_stub);
+
+			utils::hook::jump(0x56B726, vm_execute_stub);
 		}
 	};
 }

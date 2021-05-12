@@ -4,13 +4,17 @@
 
 #include "game/scripting/event.hpp"
 #include "game/scripting/execution.hpp"
-#include "game/scripting/lua/engine.hpp"
 #include "game/scripting/functions.hpp"
+
+#include "game/scripting/lua/engine.hpp"
+#include "game/scripting/lua/value_conversion.hpp"
+
+#include "scripting.hpp"
 
 namespace scripting
 {
 	std::unordered_map<int, std::unordered_map<std::string, int>> fields_table;
-	std::unordered_map<std::string, std::unordered_map<std::string, char*>> script_function_table;
+	std::unordered_map<std::string, std::unordered_map<std::string, unsigned int>> script_function_table;
 
 	namespace
 	{
@@ -21,7 +25,6 @@ namespace scripting
 		utils::hook::detour g_shutdown_game_hook;
 
 		utils::hook::detour scr_emit_function_hook;
-		utils::hook::detour scr_end_load_scripts_hook;
 
 		void vm_notify_stub(const unsigned int notify_list_owner_id, const unsigned int string_value,
 			                game::VariableValue* top)
@@ -74,12 +77,11 @@ namespace scripting
 			g_shutdown_game_hook.invoke<void>(free_scripts);
 		}
 
-		char* function_pos(unsigned int filename, unsigned int name)
+		unsigned int function_pos(unsigned int filename, unsigned int name)
 		{
 			const auto scripts_pos = *reinterpret_cast<int*>(0x1D6EB14);
 
 			const auto v2 = game::FindVariable(scripts_pos, filename);
-
 			const auto v3 = game::FindObject(scripts_pos, v2);
 			const auto v4 = game::FindVariable(v3, name);
 
@@ -88,10 +90,10 @@ namespace scripting
 				return 0;
 			}
 
-			return utils::hook::invoke<char*>(0x5659C0, v3, v4);
+			return utils::hook::invoke<unsigned int>(0x5659C0, v3, v4);
 		}
 
-		void scr_emit_function_stub(unsigned int filename, unsigned int threadName, char* codePos)
+		void scr_emit_function_stub(unsigned int filename, unsigned int threadName, unsigned int codePos)
 		{
 			const auto* name = game::SL_ConvertToString(filename);
 			const auto filename_id = atoi(name);

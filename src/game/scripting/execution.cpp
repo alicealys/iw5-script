@@ -19,14 +19,6 @@ namespace scripting
 			return value_ptr;
 		}
 
-		void push_value(const script_value& value)
-		{
-			auto* value_ptr = allocate_argument();
-			*value_ptr = value.get_raw();
-
-			game::AddRefToValue(value_ptr->type, value_ptr->u);
-		}
-
 		script_value get_return_value()
 		{
 			if (game::scr_VmPub->inparamcount == 0)
@@ -84,6 +76,14 @@ namespace scripting
 		}
 	}
 
+	void push_value(const script_value& value)
+	{
+		auto* value_ptr = allocate_argument();
+		*value_ptr = value.get_raw();
+
+		game::AddRefToValue(value_ptr->type, value_ptr->u);
+	}
+
 	void notify(const entity& entity, const std::string& event, const std::vector<script_value>& arguments)
 	{
 		stack_isolation _;
@@ -137,7 +137,7 @@ namespace scripting
 		return call_function(name, arguments);
 	}
 
-	script_value exec_ent_thread(const entity& entity, const char* pos, const std::vector<script_value>& arguments)
+	script_value exec_ent_thread(const entity& entity, unsigned int pos, const std::vector<script_value>& arguments)
 	{
 		const auto id = entity.get_entity_id();
 
@@ -162,8 +162,7 @@ namespace scripting
 		return value;
 	}
 
-	script_value call_script_function(const entity& entity, const std::string& filename,
-		const std::string& function, const std::vector<script_value>& arguments)
+	unsigned int get_function_pos(const std::string& filename, const std::string& function)
 	{
 		if (scripting::script_function_table.find(filename) == scripting::script_function_table.end())
 		{
@@ -179,6 +178,13 @@ namespace scripting
 
 		const auto pos = functions.at(function);
 
+		return pos;
+	}
+
+	script_value call_script_function(const entity& entity, const std::string& filename,
+		const std::string& function, const std::vector<script_value>& arguments)
+	{
+		const auto pos = get_function_pos(filename, function);
 		return exec_ent_thread(entity, pos, arguments);
 	}
 

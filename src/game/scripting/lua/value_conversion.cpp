@@ -2,6 +2,7 @@
 #include "value_conversion.hpp"
 #include "../functions.hpp"
 #include "../execution.hpp"
+#include "../../../component/notifies.hpp"
 
 namespace scripting::lua
 {
@@ -12,6 +13,25 @@ namespace scripting::lua
 			int index;
 			script_value value;
 		};
+
+		game::VariableValue function_to_pos(unsigned int pos, sol::lua_value value)
+		{
+			const auto function = value.as<sol::protected_function>();
+
+			if (pos < notifies::vm_execute_hooks.size())
+			{
+				notifies::vm_execute_hooks[pos] = function;
+				return {};
+			}
+
+			notifies::vm_execute_hooks.push_back(function);
+
+			game::VariableValue func;
+			func.type = game::SCRIPT_FUNCTION;
+			func.u.uintValue = notifies::vm_execute_hooks.size() - 1;
+
+			return func;
+		}
 
 		sol::lua_value entity_to_array(lua_State* state, unsigned int id)
 		{
@@ -70,7 +90,14 @@ namespace scripting::lua
 				const auto i = values.at(key).index;
 				const auto variable = &game::scr_VarGlob->childVariableValue[i];
 
-				const auto new_variable = convert({s, value}).get_raw();
+				const auto new_variable = variable->type == game::SCRIPT_FUNCTION
+					? function_to_pos(variable->u.u.uintValue, value)
+					: convert({s, value}).get_raw();
+
+				if (!new_variable.type)
+				{
+					return;
+				}
 
 				game::AddRefToValue(new_variable.type, new_variable.u);
 				game::RemoveRefToValue(variable->type, variable->u.u);
@@ -145,8 +172,13 @@ namespace scripting::lua
 			return script_value(variable);
 		}
 
-		sol::lua_value convert_function(lua_State* state, const char* pos)
+		sol::lua_value convert_function(lua_State* state, unsigned int pos)
 		{
+			if (pos < notifies::vm_execute_hooks.size())
+			{
+				return notifies::vm_execute_hooks[pos];
+			}
+
 			return [pos](const entity& entity, const sol::this_state s, sol::variadic_args va)
 			{
 				std::vector<script_value> arguments{};
@@ -181,7 +213,14 @@ namespace scripting::lua
 			const auto variable_id = game::GetVariable(parent_id, id);
 			const auto variable = &game::scr_VarGlob->childVariableValue[variable_id + offset];
 
-			const auto new_variable = convert({s, value}).get_raw();
+			const auto new_variable = variable->type == game::SCRIPT_FUNCTION
+				? function_to_pos(variable->u.u.uintValue, value)
+				: convert({s, value}).get_raw();
+
+			if (!new_variable.type)
+			{
+				return;
+			}
 
 			game::AddRefToValue(new_variable.type, new_variable.u);
 			game::RemoveRefToValue(variable->type, variable->u.u);
@@ -296,7 +335,7 @@ namespace scripting::lua
 
 		if (value.is<std::function<void()>>())
 		{
-			return convert_function(state, value.get_raw().u.codePosValue);
+			return convert_function(state, value.get_raw().u.uintValue);
 		}
 
 		if (value.is<entity>())

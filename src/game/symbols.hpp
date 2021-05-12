@@ -42,7 +42,7 @@ namespace game
 	WEAK symbol<void(int arg, char* buffer, int bufferLength)> SV_Cmd_ArgvBuffer{0x5459F0};
 
 	WEAK symbol<void(unsigned int notifyListOwnerId, unsigned int stringValue, VariableValue* top)> VM_Notify{0x569720};
-	WEAK symbol<unsigned int(unsigned int localId, const char* pos, unsigned int paramcount)> VM_Execute{0x56DFE0};
+	WEAK symbol<unsigned int(unsigned int localId, unsigned int pos, unsigned int paramcount)> VM_Execute{0x56DFE0};
 
 	WEAK symbol<void* (jmp_buf* Buf, int Value)> longjmp{0x7363BC};
 	WEAK symbol<int(jmp_buf* Buf)> _setjmp{0x734CF8};

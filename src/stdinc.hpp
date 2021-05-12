@@ -1,6 +1,9 @@
 #pragma once
 
 #pragma warning(disable: 4244)
+#pragma warning(disable: 4016)
+#pragma warning(disable: 4018)
+#pragma warning(disable: 4146)
 #pragma warning(disable: 26812)
 
 #define DLL_EXPORT extern "C" __declspec(dllexport)
