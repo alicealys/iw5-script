@@ -7,7 +7,7 @@ namespace game
 	// Functions
 
 	WEAK symbol<void(int type, VariableUnion u)> AddRefToValue{0x5656E0};
-	WEAK symbol<void(unsigned int id)> AddReftoObject{0x5655F0};
+	WEAK symbol<void(unsigned int id)> AddRefToObject{0x5655F0};
 	WEAK symbol<unsigned int(unsigned int id)> AllocThread{0x565580};
 	WEAK symbol<void(int type, VariableUnion u)> RemoveRefToValue{0x565730};
 

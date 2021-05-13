@@ -146,7 +146,7 @@ namespace scripting
 			scripting::push_value(*i);
 		}
 
-		game::AddReftoObject(id);
+		game::AddRefToObject(id);
 
 		const auto local_id = game::AllocThread(id);
 		const auto result = game::VM_Execute(local_id, pos, arguments.size());
@@ -170,14 +170,12 @@ namespace scripting
 		};
 
 		const auto functions = scripting::script_function_table[filename];
-
 		if (functions.find(function) == functions.end())
 		{
 			throw std::runtime_error("Function '" + function + "' in file '" + filename + "' not found");
 		}
 
 		const auto pos = functions.at(function);
-
 		return pos;
 	}
 
