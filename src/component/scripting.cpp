@@ -15,6 +15,7 @@ namespace scripting
 {
 	std::unordered_map<int, std::unordered_map<std::string, int>> fields_table;
 	std::unordered_map<std::string, std::unordered_map<std::string, unsigned int>> script_function_table;
+	std::unordered_map<unsigned, std::vector<unsigned>> file_map;
 
 	namespace
 	{
@@ -95,34 +96,39 @@ namespace scripting
 
 		void scr_emit_function_stub(unsigned int filename, unsigned int threadName, unsigned int codePos)
 		{
-			const auto* name = game::SL_ConvertToString(filename);
-			const auto filename_id = atoi(name);
-
-			for (const auto& entry : scripting::file_list)
+			if (file_map.find(filename) == file_map.end())
 			{
-				if (entry.first == filename_id)
+				file_map[filename] = {};
+			}
+
+			file_map[filename].push_back(threadName);
+
+			scr_emit_function_hook.invoke<void>(filename, threadName, codePos);
+		}
+
+		void scr_load_script_stub()
+		{
+			utils::hook::invoke<void>(0x523DA0);
+
+			auto count = 0;
+
+			for (const auto& file : file_map)
+			{
+				const auto* name = game::SL_ConvertToString(file.first);
+				const auto filename_id = atoi(name);
+
+				for (const auto& function : file.second)
 				{
-					if (script_function_table.find(entry.second) == script_function_table.end())
-					{
-						script_function_table[entry.second] = {};
-					}
+					const auto pos = function_pos(file.first, function);
+					const auto function_name = scripting::find_token(function);
+					const auto filename = scripting::file_list[filename_id];
 
-					for (const auto& token : scripting::token_map)
+					if (pos && !filename.empty() && !function_name.empty())
 					{
-						if (token.second == threadName)
-						{
-							const auto pos = function_pos(filename, threadName);
-
-							if (pos)
-							{
-								script_function_table[entry.second][token.first] = pos;
-							}
-						}
+						script_function_table[filename][function_name] = pos;
 					}
 				}
 			}
-
-			scr_emit_function_hook.invoke<void>(filename, threadName, codePos);
 		}
 	}
 
@@ -138,6 +144,8 @@ namespace scripting
 			vm_notify_hook.create(0x569720, vm_notify_stub);
 
 			scr_emit_function_hook.create(0x561400, scr_emit_function_stub);
+
+			utils::hook::call(0x523F3E, scr_load_script_stub);
 
 			scheduler::loop([]()
 			{
