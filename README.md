@@ -10,7 +10,6 @@ Works the same as it does in [IW6x](https://github.com/XLabsProject/iw6x-client/
 * Copy it to `%localappdata%/Plutonium/storage/iw5/plugins/`
 * Create a `__init__.lua` file in a folder with a name of your choice in `%localappdata%/Plutonium/storage/iw5/scripts/`
 * Example `%localappdata%/Plutonium/storage/iw5/scripts/myscript/__init__.lua`
-* Run the server (preferably with the `-no-scripting` flag to disable ChaiScript)
 
 Below are some features that are not available or documented in IW6x
 
@@ -84,7 +83,7 @@ Note: you cannot create new struct fields but only modify or read existing ones,
 
 # Functions
 
-You can call (will not work for every function) functions and methods within the game's gsc scripts using the 
+You can call functions and methods within the game's gsc scripts using the 
 
 `scriptcall(filename, function, ...)` method:
 ```lua
@@ -93,7 +92,7 @@ level:onnotify("connected", function(player)
         local hudelem = player:scriptcall("maps/mp/gametypes/_hud_utils", "createFontString", 1)
         
         hudelem:scriptcall("maps/mp/gametypes/_hud_util", "setPoint", "CENTER", nil, 100, 100)
-        hudelem.label = "&Hello world"
+        hudelem.label = "&Hello world" -- "&Hello world" is the equivalent of doing &"Hello world" in GSC
     end)
 end)
 ```
@@ -108,4 +107,21 @@ level:onnotify("connected", function(player)
         levelstruct.killstreakFuncs["ac130"](player)
     end)
 end)
+```
+
+Functions in variables can also be replaced with lua functions:
+
+```lua
+local levelstruct = level:getstruct()
+local callbackPlayerDamage = levelstruct.callbackPlayerDamage -- Save the original function
+
+-- The first argument (_self) is the entity the function is called on
+levelstruct.callbackPlayerDamage = function(_self, inflictor, attacker, damage, flags, mod, weapon, point, dir, hitLoc, timeoffset)
+    if (mod == "MOD_FALLING") then
+        damage = 0
+    end
+
+    callbackPlayerDamage(_self, inflictor, attacker, damage, flags, mod, weapon, point, dir, hitLoc, timeoffset)
+end
+
 ```
