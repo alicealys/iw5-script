@@ -15,7 +15,6 @@ namespace scripting
 {
 	std::unordered_map<int, std::unordered_map<std::string, int>> fields_table;
 	std::unordered_map<std::string, std::unordered_map<std::string, unsigned int>> script_function_table;
-	std::unordered_map<unsigned, std::vector<unsigned>> file_map;
 
 	namespace
 	{
@@ -25,7 +24,10 @@ namespace scripting
 		utils::hook::detour scr_load_level_hook;
 		utils::hook::detour g_shutdown_game_hook;
 
-		utils::hook::detour scr_emit_function_hook;
+		utils::hook::detour scr_set_thread_position_hook;
+		utils::hook::detour process_script_hook;
+
+		std::string current_file;
 
 		void vm_notify_stub(const unsigned int notify_list_owner_id, const unsigned int string_value,
 			                game::VariableValue* top)
@@ -78,57 +80,29 @@ namespace scripting
 			g_shutdown_game_hook.invoke<void>(free_scripts);
 		}
 
-		unsigned int function_pos(unsigned int filename, unsigned int name)
+		void process_script_stub(const char* filename)
 		{
-			const auto scripts_pos = *reinterpret_cast<int*>(0x1D6EB14);
+			current_file = filename;
 
-			const auto v2 = game::FindVariable(scripts_pos, filename);
-			const auto v3 = game::FindObject(scripts_pos, v2);
-			const auto v4 = game::FindVariable(v3, name);
-
-			if (!v2 || !v3 || !v4)
+			const auto file_id = atoi(filename);
+			if (file_id)
 			{
-				return 0;
+				current_file = scripting::file_list[file_id];
 			}
 
-			return utils::hook::invoke<unsigned int>(0x5659C0, v3, v4);
+			process_script_hook.invoke<void>(filename);
 		}
 
-		void scr_emit_function_stub(unsigned int filename, unsigned int threadName, unsigned int codePos)
+		void scr_set_thread_position_stub(unsigned int threadName, unsigned int codePos)
 		{
-			if (file_map.find(filename) == file_map.end())
+			const auto function_name = scripting::find_token(threadName);
+
+			if (!function_name.empty())
 			{
-				file_map[filename] = {};
+				script_function_table[current_file][function_name] = codePos;
 			}
 
-			file_map[filename].push_back(threadName);
-
-			scr_emit_function_hook.invoke<void>(filename, threadName, codePos);
-		}
-
-		void scr_load_script_stub()
-		{
-			utils::hook::invoke<void>(0x523DA0);
-
-			auto count = 0;
-
-			for (const auto& file : file_map)
-			{
-				const auto* name = game::SL_ConvertToString(file.first);
-				const auto filename_id = atoi(name);
-
-				for (const auto& function : file.second)
-				{
-					const auto pos = function_pos(file.first, function);
-					const auto function_name = scripting::find_token(function);
-					const auto filename = scripting::file_list[filename_id];
-
-					if (pos && !filename.empty() && !function_name.empty())
-					{
-						script_function_table[filename][function_name] = pos;
-					}
-				}
-			}
+			scr_set_thread_position_hook.invoke<void>(threadName, codePos);
 		}
 	}
 
@@ -143,9 +117,8 @@ namespace scripting
 			scr_add_class_field_hook.create(0x567CD0, scr_add_class_field_stub);
 			vm_notify_hook.create(0x569720, vm_notify_stub);
 
-			scr_emit_function_hook.create(0x561400, scr_emit_function_stub);
-
-			utils::hook::call(0x523F3E, scr_load_script_stub);
+			scr_set_thread_position_hook.create(0x5616D0, scr_set_thread_position_stub);
+			process_script_hook.create(0x56B130, process_script_stub);
 
 			scheduler::loop([]()
 			{
