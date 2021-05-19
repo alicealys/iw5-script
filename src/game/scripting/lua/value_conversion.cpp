@@ -149,12 +149,13 @@ namespace scripting::lua
 		game::VariableValue convert_function(sol::lua_value value)
 		{
 			const auto function = value.as<sol::protected_function>();
+			const auto index = ++notifies::function_count;
 
-			notifies::vm_execute_hooks.push_back(function);
+			notifies::vm_execute_hooks[index] = function;
 
 			game::VariableValue func;
 			func.type = game::SCRIPT_FUNCTION;
-			func.u.uintValue = notifies::vm_execute_hooks.size() - 1;
+			func.u.uintValue = index;
 
 			return func;
 		}

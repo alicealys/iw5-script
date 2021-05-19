@@ -171,7 +171,7 @@ namespace scripting::lua
 			{
 				const auto id = entity.get_entity_id();
 
-				return scripting::lua::entity_to_struct(s, id);
+				return entity_to_struct(s, id);
 			};
 
 			entity_type["scriptcall"] = [](const entity& entity, const sol::this_state s, const std::string& filename,
@@ -184,7 +184,7 @@ namespace scripting::lua
 					arguments.push_back(convert({s, arg}));
 				}
 
-				return convert(s, scripting::call_script_function(entity, filename, function, arguments));
+				return convert(s, call_script_function(entity, filename, function, arguments));
 			};
 
 			struct game
@@ -252,6 +252,56 @@ namespace scripting::lua
 			game_type["onplayerkilled"] = [](const game&, const sol::protected_function& callback)
 			{
 				notifies::add_player_killed_callback(callback);
+			};
+
+			game_type["scriptcall"] = [](const game&, const sol::this_state s, const std::string& filename,
+				const std::string function, sol::variadic_args va)
+			{
+				std::vector<script_value> arguments{};
+
+				for (auto arg : va)
+				{
+					arguments.push_back(convert({s, arg}));
+				}
+
+				const auto level = entity{*::game::levelEntityId};
+
+				return convert(s, call_script_function(level, filename, function, arguments));
+			};
+
+			game_type["detour"] = [](const game&, const sol::this_state s, const std::string& filename,
+				const std::string function_name, const sol::protected_function& function)
+			{
+				const auto pos = get_function_pos(filename, function_name);
+				notifies::vm_execute_hooks[pos] = function;
+
+				auto detour = sol::table::create(function.lua_state());
+
+				detour["disable"] = [pos]()
+				{
+					notifies::vm_execute_hooks.erase(pos);
+				};
+
+				detour["enable"] = [pos, function]()
+				{
+					notifies::vm_execute_hooks[pos] = function;
+				};
+
+				detour["invoke"] = [filename, function_name](const entity& entity, const sol::this_state s, sol::variadic_args va)
+				{
+					std::vector<script_value> arguments{};
+
+					for (auto arg : va)
+					{
+						arguments.push_back(convert({s, arg}));
+					}
+
+					notifies::hook_enabled = false;
+					call_script_function(entity, filename, function_name, arguments);
+					notifies::hook_enabled = true;
+				};
+
+				return detour;
 			};
 		}
 	}

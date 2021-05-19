@@ -10,7 +10,9 @@
 
 namespace notifies
 {
-	std::vector<sol::protected_function> vm_execute_hooks;
+	std::unordered_map<unsigned, sol::protected_function> vm_execute_hooks;
+	unsigned int function_count = 0;
+	bool hook_enabled = true;
 
 	namespace
 	{
@@ -188,7 +190,7 @@ namespace notifies
 
 		bool execute_vm_hook(unsigned int pos)
 		{
-			if (pos > vm_execute_hooks.size())
+			if (!hook_enabled || vm_execute_hooks.find(pos) == vm_execute_hooks.end())
 			{
 				return false;
 			}
@@ -201,12 +203,19 @@ namespace notifies
 
 			std::vector<sol::lua_value> args;
 
-			for (auto* value = &game::scr_VmPub->top[1]; value->type != game::SCRIPT_END; --value)
+			const auto offset = pos <= function_count
+				? 1
+				: 0;
+
+			for (auto* value = &game::scr_VmPub->top[offset]; value->type != game::SCRIPT_END; --value)
 			{
 				args.push_back(scripting::lua::convert(state, *value));	
 			}
 
-			const auto value = scripting::lua::convert({state, hook(self, sol::as_args(args))});
+			const auto result = hook(self, sol::as_args(args));
+			scripting::lua::handle_error(result);
+
+			const auto value = scripting::lua::convert({state, result});
 
 			game::Scr_ClearOutParams();
 
@@ -277,7 +286,9 @@ namespace notifies
 
 	void clear_callbacks()
 	{
+		function_count = 0;
 		vm_execute_hooks.clear();
+
 		player_damage_callbacks.clear();
 		player_killed_callbacks.clear();
 	}
