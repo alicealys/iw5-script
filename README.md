@@ -125,3 +125,20 @@ levelstruct.callbackPlayerDamage = function(_self, inflictor, attacker, damage, 
 end
 
 ```
+
+You can also detour existing functions in gsc scripts with lua functions:
+
+```lua
+local player_damage_hook = nil
+player_damage_hook = game:detour("maps/mp/gametypes/_callbacksetup", "CodeCallback_PlayerDamage", 
+    function(_self, inflictor, attacker, damage, flags, mod, weapon, point, dir, hitLoc, timeoffset)
+        print(_self.name .. " got " .. damage .. " damage")
+
+        -- Call original function
+        player_damage_hook.invoke(_self, inflictor, attacker, damage, flags, mod, weapon, point, dir, hitLoc, timeoffset)
+    end
+)
+
+player_damage_hook.disable() -- Disable hook
+player_damage_hook.enable()  -- Enable hook
+```
