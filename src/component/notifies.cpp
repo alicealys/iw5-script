@@ -24,6 +24,8 @@ namespace notifies
 		std::vector<sol::protected_function> player_killed_callbacks;
 		std::vector<sol::protected_function> player_damage_callbacks;
 
+		std::unordered_map<int, std::vector<std::pair<int, std::string>>> cmd_notifies;
+
 		sol::lua_value convert_entity(lua_State* state, const game::gentity_s* ent)
 		{
 			if (!ent)
@@ -153,13 +155,35 @@ namespace notifies
 			scr_player_damage_hook.invoke<void>(self, inflictor, attacker, damage, dflags, meansOfDeath, weapon, isAlternate, vPoint, vDir, hitLoc, timeOffset);
 		}
 
+		void trigger_cmd_notifies(int clientNum, int key)
+		{
+			for (const auto& cmd : cmd_notifies[clientNum])
+			{
+				if (cmd.first == key)
+				{
+					const auto _player = scripting::call("getentbynum", {clientNum});
+
+					if (_player.get_raw().type == game::SCRIPT_OBJECT)
+					{
+						const auto player = _player.as<scripting::entity>();
+						scripting::notify(player, cmd.second, {});
+					}
+				}
+			}
+		}
+
 		void client_command_stub(int clientNum)
 		{
 			char cmd[1024] = { 0 };
 
 			game::SV_Cmd_ArgvBuffer(0, cmd, 1024);
 
-			if (cmd == "say"s)
+			if (cmd == "n"s && cmd_notifies.find(clientNum) != cmd_notifies.end())
+			{
+				const auto key = atoi(game::ConcatArgs(1));
+				trigger_cmd_notifies(clientNum, key);
+			}
+			else if (cmd == "say"s)
 			{
 				std::string message = game::ConcatArgs(1);
 				message.erase(0, 1);
@@ -274,6 +298,18 @@ namespace notifies
 		}
 	}
 
+	void add_cmd_notify(int clientNum, const std::string& cmd, const std::string& notify)
+	{
+		const auto keynum = game::Key_GetBindingForCmd(cmd.data());
+
+		if (!keynum)
+		{
+			return;
+		}
+
+		cmd_notifies[clientNum].push_back({keynum, notify});
+	}
+
 	void add_player_damage_callback(const sol::protected_function& callback)
 	{
 		player_damage_callbacks.push_back(callback);
@@ -288,6 +324,8 @@ namespace notifies
 	{
 		function_count = 0;
 		vm_execute_hooks.clear();
+
+		cmd_notifies.clear();
 
 		player_damage_callbacks.clear();
 		player_killed_callbacks.clear();

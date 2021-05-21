@@ -6,6 +6,8 @@ namespace notifies
 	extern unsigned int function_count;
 	extern bool hook_enabled;
 
+	void add_cmd_notify(int clientNum, const std::string& cmd, const std::string& notify);
+
 	void add_player_damage_callback(const sol::protected_function& callback);
 	void add_player_killed_callback(const sol::protected_function& callback);
 
