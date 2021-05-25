@@ -13,7 +13,7 @@ namespace notifies
 	std::unordered_map<unsigned, sol::protected_function> vm_execute_hooks;
 	unsigned int function_count = 0;
 	bool hook_enabled = true;
-
+	
 	namespace
 	{
 		utils::hook::detour client_command_hook;
@@ -214,8 +214,14 @@ namespace notifies
 
 		bool execute_vm_hook(unsigned int pos)
 		{
-			if (!hook_enabled || vm_execute_hooks.find(pos) == vm_execute_hooks.end())
+			if (vm_execute_hooks.find(pos) == vm_execute_hooks.end())
 			{
+				return false;
+			}
+
+			if (!hook_enabled && pos > function_count)
+			{
+				hook_enabled = true;
 				return false;
 			}
 
@@ -227,13 +233,11 @@ namespace notifies
 
 			std::vector<sol::lua_value> args;
 
-			const auto offset = pos <= function_count
-				? 1
-				: 0;
+			const auto top = game::scr_function_stack->top;
 
-			for (auto* value = &game::scr_VmPub->top[offset]; value->type != game::SCRIPT_END; --value)
+			for (auto* value = top; value->type != game::SCRIPT_END; --value)
 			{
-				args.push_back(scripting::lua::convert(state, *value));	
+				args.push_back(scripting::lua::convert(state, *value));
 			}
 
 			const auto result = hook(self, sol::as_args(args));
@@ -243,23 +247,31 @@ namespace notifies
 
 			game::Scr_ClearOutParams();
 
-			if (value.get_raw().type)
+			const auto type = value.get_raw().type;
+
+			if (type && type < game::SCRIPT_END)
 			{
 				scripting::push_value(value);
 			}
-
+			
 			return true;
 		}
+
+		bool end = false;
 
 		__declspec(naked) void vm_execute_stub()
 		{
 			__asm
 			{
+				cmp end, 0
+				jne OP_End
+
 				pushad
 				push esi
 				call execute_vm_hook
+
 				cmp al, 0
-				jne op_return
+				jne OP_checkclearparams
 
 				pop esi
 				popad
@@ -286,12 +298,17 @@ namespace notifies
 
 				push 0x56B740
 				retn
-
-			op_return:
+			OP_checkclearparams:
 				pop esi
 				popad
 
-				mov eax, 1
+				mov end, 1
+				mov eax, 0x76
+
+				jmp loc_1
+			OP_End:
+				mov end, 0
+				mov eax, 0
 
 				jmp loc_1
 			}

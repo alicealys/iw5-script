@@ -191,6 +191,7 @@ namespace scripting::lua
 					arguments.push_back(convert({s, arg}));
 				}
 
+				notifies::hook_enabled = false;
 				return convert(s, call_script_function(entity, filename, function, arguments));
 			};
 
@@ -273,6 +274,7 @@ namespace scripting::lua
 
 				const auto level = entity{*::game::levelEntityId};
 
+				notifies::hook_enabled = false;
 				return convert(s, call_script_function(level, filename, function, arguments));
 			};
 
@@ -305,7 +307,6 @@ namespace scripting::lua
 
 					notifies::hook_enabled = false;
 					call_script_function(entity, filename, function_name, arguments);
-					notifies::hook_enabled = true;
 				};
 
 				return detour;
