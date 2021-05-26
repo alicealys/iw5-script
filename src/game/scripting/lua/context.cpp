@@ -192,7 +192,10 @@ namespace scripting::lua
 				}
 
 				notifies::hook_enabled = false;
-				return convert(s, call_script_function(entity, filename, function, arguments));
+				const auto result = convert(s, call_script_function(entity, filename, function, arguments));
+				notifies::hook_enabled = true;
+
+				return result;
 			};
 
 			struct game
@@ -275,7 +278,10 @@ namespace scripting::lua
 				const auto level = entity{*::game::levelEntityId};
 
 				notifies::hook_enabled = false;
-				return convert(s, call_script_function(level, filename, function, arguments));
+				const auto result = convert(s, call_script_function(level, filename, function, arguments));
+				notifies::hook_enabled = true;
+
+				return result;
 			};
 
 			game_type["detour"] = [](const game&, const sol::this_state s, const std::string& filename,
@@ -306,7 +312,10 @@ namespace scripting::lua
 					}
 
 					notifies::hook_enabled = false;
-					call_script_function(entity, filename, function_name, arguments);
+					const auto result = convert(s, call_script_function(entity, filename, function_name, arguments));
+					notifies::hook_enabled = true;
+
+					return result;
 				};
 
 				return detour;
