@@ -244,16 +244,15 @@ namespace notifies
 			scripting::lua::handle_error(result);
 
 			const auto value = scripting::lua::convert({state, result});
+			const auto type = value.get_raw().type;
 
 			game::Scr_ClearOutParams();
 
-			const auto type = value.get_raw().type;
-
-			if (type && type < game::SCRIPT_END)
+			if (result.valid() && type && type < game::SCRIPT_END)
 			{
 				scripting::push_value(value);
 			}
-			
+
 			return true;
 		}
 
@@ -313,6 +312,12 @@ namespace notifies
 				jmp loc_1
 			}
 		}
+	}
+
+	void clear_cmd_notifies(const scripting::entity& entity)
+	{
+		const auto clientNum = entity.call("getentitynumber", {}).as<int>();
+		cmd_notifies[clientNum] = {};
 	}
 
 	void add_cmd_notify(int clientNum, const std::string& cmd, const std::string& notify)

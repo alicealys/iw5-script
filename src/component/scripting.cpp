@@ -10,6 +10,7 @@
 #include "game/scripting/lua/value_conversion.hpp"
 
 #include "scripting.hpp"
+#include "notifies.hpp"
 
 namespace scripting
 {
@@ -47,7 +48,10 @@ namespace scripting
 
 				if (e.name == "connected")
 				{
-					scripting::clear_entity_fields(e.entity);
+					const auto entity = e.arguments[0].as<scripting::entity>();
+
+					notifies::clear_cmd_notifies(entity);
+					clear_entity_fields(entity);
 				}
 
 				lua::engine::notify(e);
