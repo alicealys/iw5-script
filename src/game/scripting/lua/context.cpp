@@ -327,6 +327,37 @@ namespace scripting::lua
 
 				return detour;
 			};
+
+			game_type["getfunctions"] = [entity_type](const game&, const sol::this_state s, const std::string& filename)
+			{
+				if (scripting::script_function_table.find(filename) == scripting::script_function_table.end())
+				{
+					throw std::runtime_error("File '" + filename + "' not found");
+				}
+
+				auto functions = sol::table::create(s.lua_state());
+
+				for (const auto& function : scripting::script_function_table[filename])
+				{
+					functions[function.first] = [filename, function](const entity& entity, const sol::this_state s, sol::variadic_args va)
+					{
+						std::vector<script_value> arguments{};
+
+						for (auto arg : va)
+						{
+							arguments.push_back(convert({s, arg}));
+						}
+
+						notifies::hook_enabled = false;
+						const auto result = convert(s, call_script_function(entity, filename, function.first, arguments));
+						notifies::hook_enabled = true;
+
+						return result;
+					};
+				}
+
+				return functions;
+			};
 		}
 	}
 
