@@ -100,6 +100,16 @@ namespace scripting::lua
 				return values.size();
 			};
 
+			metatable[sol::meta_function::to_string] = [id, values]()
+			{
+				return utils::string::va("script array => id: %i length: %i", id, values.size());
+			};
+
+			table["getraw"] = [id]()
+			{
+				return entity(id);
+			};
+
 			table["getkeys"] = [values]()
 			{
 				std::vector<std::string> _keys;
@@ -230,6 +240,16 @@ namespace scripting::lua
 			result.type = (game::scriptType_e)variable.type;
 
 			return convert(s, result);
+		};
+
+		metatable[sol::meta_function::to_string] = [parent_id]()
+		{
+			return utils::string::va("script struct => id: %i", parent_id);
+		};
+
+		table["getraw"] = [parent_id]()
+		{
+			return entity(parent_id);
 		};
 
 		table[sol::metatable_key] = metatable;
