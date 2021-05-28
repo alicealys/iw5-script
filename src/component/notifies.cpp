@@ -13,7 +13,7 @@ namespace notifies
 	std::unordered_map<unsigned, sol::protected_function> vm_execute_hooks;
 	unsigned int function_count = 0;
 	bool hook_enabled = true;
-	
+
 	namespace
 	{
 		utils::hook::detour client_command_hook;
@@ -25,6 +25,9 @@ namespace notifies
 		std::vector<sol::protected_function> player_damage_callbacks;
 
 		std::unordered_map<int, std::vector<std::pair<int, std::string>>> cmd_notifies;
+
+		char empty_function[2] = {0x76, 0x0}; // CHECK_CLEAR_PARAMS, END
+		char* empty_function_pos = empty_function;
 
 		sol::lua_value convert_entity(lua_State* state, const game::gentity_s* ent)
 		{
@@ -256,30 +259,25 @@ namespace notifies
 			return true;
 		}
 
-		bool end = false;
-
 		__declspec(naked) void vm_execute_stub()
 		{
 			__asm
 			{
-				cmp end, 0
-				jne OP_End
-
 				pushad
 				push esi
 				call execute_vm_hook
 
 				cmp al, 0
-				jne OP_checkclearparams
+				jne void_call
 
 				pop esi
 				popad
 
+				jmp loc_1
+			loc_1:
 				movzx eax, byte ptr[esi]
 				inc esi
 
-				jmp loc_1
-			loc_1:
 				mov [ebp - 0x18], eax
 				mov [ebp - 0x8], esi
 
@@ -297,17 +295,11 @@ namespace notifies
 
 				push 0x56B740
 				retn
-			OP_checkclearparams:
+			void_call:
 				pop esi
 				popad
 
-				mov end, 1
-				mov eax, 0x76
-
-				jmp loc_1
-			OP_End:
-				mov end, 0
-				mov eax, 0
+				mov esi, empty_function_pos
 
 				jmp loc_1
 			}
@@ -364,14 +356,6 @@ namespace notifies
 			scr_player_killed_hook.create(0x527CF0, scr_player_killed_stub);
 
 			utils::hook::jump(0x56B726, vm_execute_stub);
-			
-			// Temporarily remove pluto script error print as it crashes with custom gsc to lua functions
-			utils::hook::set<BYTE>(0x56D85E, 0x8B);
-			utils::hook::set<BYTE>(0x56D85F, 0x0D);
-			utils::hook::set<BYTE>(0x56D860, 0xFC);
-			utils::hook::set<BYTE>(0x56D861, 0x21);
-			utils::hook::set<BYTE>(0x56D862, 0x0B);
-			utils::hook::set<BYTE>(0x56D863, 0x02);
 		}
 	};
 }
