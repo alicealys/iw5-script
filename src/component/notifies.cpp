@@ -364,6 +364,14 @@ namespace notifies
 			scr_player_killed_hook.create(0x527CF0, scr_player_killed_stub);
 
 			utils::hook::jump(0x56B726, vm_execute_stub);
+			
+			// Temporarily remove pluto script error print as it crashes with custom gsc to lua functions
+			utils::hook::set<BYTE>(0x56D85E, 0x8B);
+			utils::hook::set<BYTE>(0x56D85F, 0x0D);
+			utils::hook::set<BYTE>(0x56D860, 0xFC);
+			utils::hook::set<BYTE>(0x56D861, 0x21);
+			utils::hook::set<BYTE>(0x56D862, 0x0B);
+			utils::hook::set<BYTE>(0x56D863, 0x02);
 		}
 	};
 }
