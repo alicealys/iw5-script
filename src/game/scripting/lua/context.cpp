@@ -358,6 +358,18 @@ namespace scripting::lua
 
 				return functions;
 			};
+
+			game_type["getgamevar"] = [](const sol::this_state s)
+			{
+				const auto id = *::game::gameEntityId;
+				const auto value = ::game::scr_VarGlob->childVariableValue[id];
+
+				::game::VariableValue variable{};
+				variable.type = (::game::scriptType_e)value.type;
+				variable.u.uintValue = value.u.u.uintValue;
+
+				return convert(s, variable);
+			};
 		}
 	}
 

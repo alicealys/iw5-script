@@ -63,4 +63,5 @@ namespace game
 
 	WEAK symbol<gentity_s> g_entities{0x0};
 	WEAK symbol<unsigned int> levelEntityId{0x208E1A4};
+	WEAK symbol<unsigned int> gameEntityId{0x208E1A8};
 }
