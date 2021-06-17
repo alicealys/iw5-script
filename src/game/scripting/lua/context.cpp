@@ -206,6 +206,53 @@ namespace scripting::lua
 				return result;
 			};
 
+			entity_type["flags"] = sol::property(
+				[](const entity& entity, const sol::this_state s)
+				{
+					const auto entref = entity.get_entity_reference();
+					if (entref.classnum != 0 || entref.entnum > 17)
+					{
+						return 0;
+					}
+
+					return game::g_entities[entref.entnum].flags;
+				},
+				[](const entity& entity, const sol::this_state s, const int value)
+				{
+					const auto entref = entity.get_entity_reference();
+					if (entref.classnum != 0 || entref.entnum > 17)
+					{
+						return;
+					}
+
+					game::g_entities[entref.entnum].flags = value;
+				}
+			);
+
+			entity_type["clientflags"] = sol::property(
+				[](const entity& entity, const sol::this_state s)
+				{
+					const auto entref = entity.get_entity_reference();
+
+					if (entref.classnum != 0 || entref.entnum > 17)
+					{
+						return 0;
+					}
+
+					return game::g_entities[entref.entnum].client->flags;
+				},
+				[](const entity& entity, const sol::this_state s, const int value)
+				{
+					const auto entref = entity.get_entity_reference();
+					if (entref.classnum != 0 || entref.entnum > 17)
+					{
+						return;
+					}
+
+					game::g_entities[entref.entnum].client->flags = value;
+				}
+			);
+
 			struct game
 			{
 			};

@@ -303,8 +303,19 @@ namespace game
 		dvar_t* hashNext;
 	};
 
+	struct gclient_s
+	{
+		char __pad0[0x35CC];
+		int flags;
+	};
+
 	struct gentity_s
 	{
 		int entnum;
+		char __pad0[0x154];
+		gclient_s* client;
+		char __pad1[0x28];
+		int flags;
+		char __pad2[0xEC];
 	};
 }
