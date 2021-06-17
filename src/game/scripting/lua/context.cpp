@@ -8,6 +8,7 @@
 
 #include "../../../component/scripting.hpp"
 #include "../../../component/notifies.hpp"
+#include "../../../component/command.hpp"
 
 #include <utils/string.hpp>
 
@@ -369,6 +370,21 @@ namespace scripting::lua
 				variable.u.uintValue = value.u.u.uintValue;
 
 				return convert(s, variable);
+			};
+
+			game_type["addcommand"] = [](const game&, const sol::this_state,
+				const std::string& name, const sol::protected_function& callback)
+			{
+				command::add_script_command(name, [callback](const command::params& params)
+				{
+					auto args = sol::table::create(callback.lua_state());
+					for (auto i = 0; i < params.size(); i++)
+					{
+						args[i + 1] = params[i];
+					}
+
+					callback(args);
+				});
 			};
 		}
 	}

@@ -3,6 +3,7 @@
 #include "context.hpp"
 
 #include "../../../component/notifies.hpp"
+#include "../../../component/command.hpp"
 
 #include <utils/io.hpp>
 
@@ -58,6 +59,7 @@ namespace scripting::lua::engine
 
 	void stop()
 	{
+		command::clear_script_commands();
 		notifies::clear_callbacks();
 		get_scripts().clear();
 	}
