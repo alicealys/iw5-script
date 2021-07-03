@@ -196,18 +196,17 @@ namespace notifies
 
 				scheduler::once([hidden, _cmd, message, clientNum]()
 				{
+					const auto teamchat = _cmd == "say_team"s;
 					const scripting::entity level{*game::levelEntityId};
 					const auto _player = scripting::call("getEntByNum", {clientNum});
 
-					if (_player.get_raw().type != game::SCRIPT_OBJECT)
+					if (_player.get_raw().type == game::SCRIPT_OBJECT)
 					{
-						return;
+						const auto player = _player.as<scripting::entity>();
+
+						scripting::notify(level, "say", {player, message, teamchat});
+						scripting::notify(player, "say", {message, teamchat});
 					}
-
-					const auto player = _player.as<scripting::entity>();
-
-					scripting::notify(level, _cmd, {player, message});
-					scripting::notify(player, _cmd, {message});
 				});
 
 				for (const auto& callback : player_say_callbacks)
