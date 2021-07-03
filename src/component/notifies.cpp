@@ -23,6 +23,7 @@ namespace notifies
 
 		std::vector<sol::protected_function> player_killed_callbacks;
 		std::vector<sol::protected_function> player_damage_callbacks;
+		std::vector<sol::protected_function> player_say_callbacks;
 
 		std::unordered_map<int, std::vector<std::pair<int, std::string>>> cmd_notifies;
 
@@ -181,32 +182,52 @@ namespace notifies
 
 			game::SV_Cmd_ArgvBuffer(0, cmd, 1024);
 
+			auto hidden = false;
 			if (cmd == "n"s && cmd_notifies.find(clientNum) != cmd_notifies.end())
 			{
 				const auto key = atoi(game::ConcatArgs(1));
 				trigger_cmd_notifies(clientNum, key);
 			}
-			else if (cmd == "say"s)
+			else if (cmd == "say"s || cmd == "say_team"s)
 			{
+				std::string _cmd = cmd;
 				std::string message = game::ConcatArgs(1);
 				message.erase(0, 1);
 
-				scheduler::once([message, clientNum]()
+				scheduler::once([hidden, _cmd, message, clientNum]()
 				{
 					const scripting::entity level{*game::levelEntityId};
 					const auto _player = scripting::call("getEntByNum", {clientNum});
 
-					if (_player.get_raw().type == game::SCRIPT_OBJECT)
+					if (_player.get_raw().type != game::SCRIPT_OBJECT)
 					{
-						const auto player = _player.as<scripting::entity>();
-
-						scripting::notify(level, "say", {player, message});
-						scripting::notify(player, "say", {message});
+						return;
 					}
+
+					const auto player = _player.as<scripting::entity>();
+
+					scripting::notify(level, _cmd, {player, message});
+					scripting::notify(player, _cmd, {message});
 				});
+
+				for (const auto& callback : player_say_callbacks)
+				{
+					const auto _player = scripting::call("getEntByNum", {clientNum}).as<scripting::entity>();
+					const auto result = callback(_player, message, _cmd == "say_team");
+
+					scripting::lua::handle_error(result);
+
+					if (result.valid() && result.get_type() == sol::type::boolean)
+					{
+						hidden = result.get<bool>();
+					}
+				}
 			}
 
-			return client_command_hook.invoke<void>(clientNum);
+			if (!hidden)
+			{
+				return client_command_hook.invoke<void>(clientNum);
+			}
 		}
 
 		unsigned int local_id_to_entity(unsigned int local_id)
@@ -334,6 +355,11 @@ namespace notifies
 		player_killed_callbacks.push_back(callback);
 	}
 
+	void add_player_say_callback(const sol::protected_function& callback)
+	{
+		player_say_callbacks.push_back(callback);
+	}
+
 	void clear_callbacks()
 	{
 		function_count = 0;
@@ -343,6 +369,7 @@ namespace notifies
 
 		player_damage_callbacks.clear();
 		player_killed_callbacks.clear();
+		player_say_callbacks.clear();
 	}
 
 	class component final : public component_interface

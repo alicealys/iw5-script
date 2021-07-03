@@ -320,6 +320,11 @@ namespace scripting::lua
 				notifies::add_player_killed_callback(callback);
 			};
 
+			game_type["onplayersay"] = [](const game&, const sol::protected_function& callback)
+			{
+				notifies::add_player_say_callback(callback);
+			};
+
 			game_type["scriptcall"] = [](const game&, const sol::this_state s, const std::string& filename,
 				const std::string function, sol::variadic_args va)
 			{
