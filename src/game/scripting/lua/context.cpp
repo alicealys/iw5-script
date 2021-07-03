@@ -9,6 +9,7 @@
 #include "../../../component/scripting.hpp"
 #include "../../../component/notifies.hpp"
 #include "../../../component/command.hpp"
+#include "../../../component/scheduler.hpp"
 
 #include <utils/string.hpp>
 
@@ -437,6 +438,20 @@ namespace scripting::lua
 
 					callback(args);
 				});
+			};
+
+			game_type["httpget"] = [](const game&, const sol::this_state, const std::string& url, 
+				const sol::protected_function& callback)
+			{
+				::scheduler::once([url, callback]()
+				{
+					const auto data = utils::http::get_data(url);
+					::scheduler::once([callback, data]()
+					{
+						const auto has_value = data.has_value();
+						callback(has_value ? data.value() : "", has_value);
+					});
+				}, ::scheduler::pipeline::async);
 			};
 		}
 	}

@@ -24,6 +24,9 @@
 #include <filesystem>
 #include <map>
 #include <csetjmp>
+#include <atlcomcli.h>
+
+#pragma comment(lib, "urlmon.lib")
 
 using namespace std::literals;
 
@@ -35,6 +38,8 @@ using namespace std::literals;
 #include "utils/hook.hpp"
 #include "utils/concurrent_list.hpp"
 #include "utils/io.hpp"
+#include "utils/concurrency.hpp"
+#include "utils/http.hpp"
 
 #include "game/structs.hpp"
 #include "game/game.hpp"
