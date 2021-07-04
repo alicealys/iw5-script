@@ -42,6 +42,19 @@ namespace scripting::lua
 		{
 			state["level"] = entity{*game::levelEntityId};
 
+			state["io"]["fileexists"] = utils::io::file_exists;
+			state["io"]["writefile"] = utils::io::write_file;
+			state["io"]["filesize"] = utils::io::file_size;
+			state["io"]["createdirectory"] = utils::io::create_directory;
+			state["io"]["directoryexists"] = utils::io::directory_exists;
+			state["io"]["directoryisempty"] = utils::io::directory_is_empty;
+			state["io"]["listfiles"] = utils::io::list_files;
+			state["io"]["copyfolder"] = utils::io::copy_folder;
+			state["io"]["readfile"] = [](const std::string& path)
+			{
+				return utils::io::read_file(path);
+			};
+
 			auto vector_type = state.new_usertype<vector>("vector", sol::constructors<vector(float, float, float)>());
 			vector_type["x"] = sol::property(&vector::get_x, &vector::set_x);
 			vector_type["y"] = sol::property(&vector::get_y, &vector::set_y);
@@ -152,16 +165,26 @@ namespace scripting::lua
 
 			entity_type["sendservercommand"] = [](const entity& entity, const sol::this_state s, const std::string& command)
 			{
-				const auto client = entity.call("getentitynumber").as<int>();
+				const auto entref = entity.get_entity_reference();
 
-				::game::SV_GameSendServerCommand(client, 0, command.data());
+				if (entref.classnum != 0 || entref.entnum > 17)
+				{
+					return;
+				}
+
+				::game::SV_GameSendServerCommand(entref.entnum, 0, command.data());
 			};
 
 			entity_type["tell"] = [](const entity& entity, const sol::this_state s, const std::string& message)
 			{
-				const auto client = entity.call("getentitynumber").as<int>();
+				const auto entref = entity.get_entity_reference();
 
-				::game::SV_GameSendServerCommand(client, 0, utils::string::va("%c \"%s\"",
+				if (entref.classnum != 0 || entref.entnum > 17)
+				{
+					return;
+				}
+
+				::game::SV_GameSendServerCommand(entref.entnum, 0, utils::string::va("%c \"%s\"",
 					84, message.data()));
 			};
 
@@ -309,6 +332,12 @@ namespace scripting::lua
 			game_type["sendservercommand"] = [](const game&, const int client, const std::string& command)
 			{
 				::game::SV_GameSendServerCommand(client, 0, command.data());
+			};
+
+			game_type["say"] = [](const game&, const sol::this_state s, const std::string& message)
+			{
+				::game::SV_GameSendServerCommand(-1, 0, utils::string::va("%c \"%s\"",
+					84, message.data()));
 			};
 
 			game_type["onplayerdamage"] = [](const game&, const sol::protected_function& callback)
