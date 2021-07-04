@@ -236,7 +236,7 @@ Http functions can be accessed from the global `http` table:
    
   request.send()
   ```
-* `http.get(url, callback, [, async])`: This function is simpler than `http.request` and only takes the url and callback as parameters (and eventually the async parameter).
+* `http.get(url, callback[, async])`: This function is simpler than `http.request` and only takes the url and callback as parameters (and eventually the async parameter).
   ```lua
   http.get("https://example.com", function(data)
       print(data)
