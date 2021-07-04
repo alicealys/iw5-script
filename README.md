@@ -28,6 +28,17 @@ level:onnotify("connected", function(player)
 end)
 ```
 
+Alternatively you can use the `game:onplayersay` function to handle player messages:
+
+```lua
+game:onplayersay(function(player, message, teamchat)
+    if (message == "!test") then
+        player:tell("Hello world!")
+        return true -- Hide the message from chat
+    end
+end)
+```
+
 # Player damage/killed callbacks
 
 Callbacks can be added using the `game:onplayerkilled` or `game:onplayerdamage` functions:
@@ -185,3 +196,49 @@ player_damage_hook = game:detour("maps/mp/gametypes/_callbacksetup", "CodeCallba
 player_damage_hook.disable() -- Disable hook
 player_damage_hook.enable()  -- Enable hook
 ```
+# HTTP
+
+Http functions can be accessed from the global `http` table:
+
+
+* `http.request(url[, options[, async]])`: Returns a table, you can replace the request's callbacks (`onprogress`, `onerror`, `onload`) with your own and send the request using the `.send()` method.
+
+  The second parameter is the options table, which should contain two other tables for the headers and parameters for POST requests.
+  
+  The async parameter specifies wheter the request will be executed on the server thread or on a async thread. If you choose to execute it asynchronously then inside the callbacks you must wrap any calls to game functions with `game:ontimeout` in order to call them from the correct thread.
+
+  ```lua
+  local request = http.request("https://example.com", {
+      headers = {
+          ["Content-type"] = "text/html"
+      },
+      parameters = {
+          foo = "bar"
+      }
+  }, true)
+  
+  request.onprogress = function(progress)
+      print(progress)
+  end
+  
+  request.onerror = function(error, code)
+      print(error, code)
+  end
+  
+  -- Request is done
+  request.onload = function(data)
+      print(data)
+      
+      game:ontimeout(function()
+          game:iprintln("Done!")
+      end, 0)
+  end
+   
+  request.send()
+  ```
+* `http.get(url, callback, [, async])`: This function is simpler than `http.request` and only takes the url and callback as parameters (and eventually the async parameter).
+  ```lua
+  http.get("https://example.com", function(data)
+      print(data)
+  end, true)
+  ```
