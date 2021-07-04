@@ -80,6 +80,11 @@ namespace scripting
 
 		void g_shutdown_game_stub(const int free_scripts)
 		{
+			while (scheduler::get_task_count(scheduler::pipeline::async)) 
+			{
+				std::this_thread::sleep_for(10ms);
+			}
+
 			lua::engine::stop();
 			g_shutdown_game_hook.invoke<void>(free_scripts);
 		}

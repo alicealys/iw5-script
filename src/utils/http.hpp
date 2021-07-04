@@ -1,11 +1,15 @@
 #pragma once
 
-#include <string>
-#include <optional>
-#include <future>
-
 namespace utils::http
 {
-	std::optional<std::string> get_data(const std::string& url);
-	std::future<std::optional<std::string>> get_data_async(const std::string& url);
+	struct result
+	{
+		CURLcode code;
+		std::string buffer;
+	};
+
+	using headers = std::unordered_map<std::string, std::string>;
+
+	std::optional<result> get_data(const std::string& url, const std::string& fields = {}, 
+		const headers& headers = {}, const std::function<void(size_t)> & callback = {});
 }

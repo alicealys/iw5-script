@@ -2,6 +2,8 @@
 
 namespace scheduler
 {
+	extern std::thread::id async_thread_id;
+
 	enum pipeline
 	{
 		server,
@@ -11,6 +13,8 @@ namespace scheduler
 
 	static const bool cond_continue = false;
 	static const bool cond_end = true;
+
+	int get_task_count(const pipeline type);
 
 	void schedule(const std::function<bool()>& callback, pipeline type = pipeline::server,
 		std::chrono::milliseconds delay = 0ms);

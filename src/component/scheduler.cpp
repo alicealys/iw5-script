@@ -5,6 +5,8 @@
 
 namespace scheduler
 {
+	std::thread::id async_thread_id;
+
 	namespace
 	{
 		struct task
@@ -19,11 +21,14 @@ namespace scheduler
 		class task_pipeline
 		{
 		public:
+			int task_count = 0;
+
 			void add(task&& task)
 			{
-				new_callbacks_.access([&task](task_list& tasks)
+				new_callbacks_.access([&task, this](task_list& tasks)
 				{
 					tasks.emplace_back(std::move(task));
+					this->task_count = tasks.size();
 				});
 			}
 
@@ -55,6 +60,8 @@ namespace scheduler
 						{
 							++i;
 						}
+
+						this->task_count = tasks.size();
 					}
 				});
 			}
@@ -92,6 +99,11 @@ namespace scheduler
 		}
 	}
 
+	int get_task_count(const pipeline type)
+	{
+		return pipelines[type].task_count;
+	}
+
 	void schedule(const std::function<bool()>& callback, const pipeline type,
 		const std::chrono::milliseconds delay)
 	{
@@ -125,6 +137,8 @@ namespace scheduler
 		}, type, delay);
 	}
 
+	unsigned int thread_id;
+
 	class component final : public component_interface
 	{
 	public:
@@ -138,6 +152,8 @@ namespace scheduler
 					std::this_thread::sleep_for(10ms);
 				}
 			});
+
+			async_thread_id = thread.get_id();
 
 			utils::hook::call(0x50CEDC, server_frame_stub);
 		}

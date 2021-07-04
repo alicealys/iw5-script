@@ -38,6 +38,12 @@ namespace scripting::lua
 			return constants;
 		}
 
+		std::string get_as_string(const sol::this_state s, sol::object o)
+		{
+			sol::state_view state(s);
+			return state["tostring"](o);
+		}
+
 		void setup_entity_type(sol::state& state, event_handler& handler, scheduler& scheduler)
 		{
 			state["level"] = entity{*game::levelEntityId};
@@ -469,18 +475,112 @@ namespace scripting::lua
 				});
 			};
 
-			game_type["httpget"] = [](const game&, const sol::this_state, const std::string& url, 
-				const sol::protected_function& callback)
+			state["http"] = sol::table::create(state.lua_state());
+
+			state["http"]["get"] = [](const sol::this_state, const std::string& url,
+				const sol::protected_function& callback, sol::variadic_args va)
 			{
+				bool async = false;
+
+				if (va.size() >= 1 && va[0].get_type() == sol::type::boolean)
+				{
+					async = va[0].as<bool>();
+				}
+
 				::scheduler::once([url, callback]()
 				{
 					const auto data = utils::http::get_data(url);
-					::scheduler::once([callback, data]()
+					const auto has_value = data.has_value();
+					const auto result = callback(has_value ? data.value().buffer : "", has_value);
+					handle_error(result);
+				}, async ? ::scheduler::pipeline::async : ::scheduler::pipeline::server);
+			};
+
+			state["http"]["request"] = [](const sol::this_state s, const std::string& url, sol::variadic_args va)
+			{
+				auto request = sol::table::create(s.lua_state());
+				
+				bool async = false;
+
+				std::string buffer{};
+				std::string fields_string{};
+				std::unordered_map<std::string, std::string> headers_map;
+
+				if (va.size() >= 1 && va[0].get_type() == sol::type::table)
+				{
+					const auto options = va[0].as<sol::table>();
+
+					const auto fields = options["parameters"];
+					const auto headers = options["headers"];
+
+					if (fields.get_type() == sol::type::table)
 					{
-						const auto has_value = data.has_value();
-						callback(has_value ? data.value() : "", has_value);
-					});
-				}, ::scheduler::pipeline::async);
+						const auto _fields = fields.get<sol::table>();
+
+						for (const auto& field : _fields)
+						{
+							const auto key = field.first.as<std::string>();
+							const auto value = get_as_string(s, field.second);
+
+							fields_string += key + "=" + value + "&";
+						}
+					}
+
+					if (headers.get_type() == sol::type::table)
+					{
+						const auto _headers = headers.get<sol::table>();
+
+						for (const auto& header : _headers)
+						{
+							const auto key = header.first.as<std::string>();
+							const auto value = get_as_string(s, header.second);
+
+							headers_map[key] = value;
+						}
+					}
+				}
+
+				if (va.size() >= 2 && va[1].get_type() == sol::type::boolean)
+				{
+					async = va[1].as<bool>();
+				}
+
+				request["onerror"] = []() {};
+				request["onprogress"] = []() {};
+				request["onload"] = []() {};
+
+				request["send"] = [async, url, fields_string, request, headers_map]()
+				{
+					::scheduler::once([url, fields_string, request, headers_map]()
+					{
+						const auto result = utils::http::get_data(url, fields_string, headers_map, [request](size_t value)
+						{
+							const auto result = request["onprogress"](value);
+							handle_error(result);
+						});
+
+						if (!result.has_value())
+						{
+							const auto result = request["onerror"]("Uknown", -1);
+							handle_error(result);
+						}
+
+						const auto _result = result.value();
+
+						if (_result.code == CURLE_OK)
+						{
+							const auto result = request["onload"](_result.buffer);
+							handle_error(result);
+						}
+						else
+						{
+							const auto result = request["onerror"](curl_easy_strerror(_result.code), _result.code);
+							handle_error(result);
+						}
+					}, async ? ::scheduler::pipeline::async : ::scheduler::pipeline::server);
+				};
+
+				return request;
 			};
 		}
 	}

@@ -25,12 +25,16 @@
 #include <map>
 #include <csetjmp>
 #include <atlcomcli.h>
+#include <optional>
+#include <future>
 
 #pragma comment(lib, "urlmon.lib")
+#pragma comment(lib, "ws2_32.lib")
 
 using namespace std::literals;
 
 #include <gsl/gsl>
+#include <curl/curl.h>
 #include <MinHook.h>
 
 #include "utils/memory.hpp"
