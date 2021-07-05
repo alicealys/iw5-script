@@ -32,6 +32,15 @@ namespace scheduler
 				});
 			}
 
+			void clear()
+			{
+				callbacks_.access([&](task_list& tasks)
+				{
+					this->merge_callbacks();
+					tasks.clear();
+				});
+			}
+
 			void execute()
 			{
 				callbacks_.access([&](task_list& tasks)
@@ -99,9 +108,9 @@ namespace scheduler
 		}
 	}
 
-	int get_task_count(const pipeline type)
+	void clear_tasks(const pipeline type)
 	{
-		return pipelines[type].task_count;
+		return pipelines[type].clear();
 	}
 
 	void schedule(const std::function<bool()>& callback, const pipeline type,
