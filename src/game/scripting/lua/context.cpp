@@ -303,6 +303,27 @@ namespace scripting::lua
 				}
 			);
 
+			entity_type["updatetext"] = [](const entity& entity, const sol::this_state s,
+				const std::string& text)
+			{
+				check_thread();
+
+				const auto entref = entity.get_entity_reference();
+				if (entref.classnum != 1)
+				{
+					return;
+				}
+
+				auto elem = &game::g_hudelems[entref.entnum].elem;
+				if (!elem->text)
+				{
+					entity.call("settext", {text});
+					return;
+				}
+
+				game::SV_SetConfigstring(elem->text + 469, text.data());
+			};
+
 			struct game
 			{
 			};

@@ -24,6 +24,8 @@ namespace game
 
 	WEAK symbol<char*(const char*)> I_CleanStr{0x0};
 
+	WEAK symbol<unsigned int(const char* name)> G_LocalizedStringIndex{0x52D900};
+
 	WEAK symbol<VariableValue(unsigned int classnum, int entnum, int offset)> GetEntityFieldValue{0x56AF20};
 	WEAK symbol<unsigned int(unsigned int parentId, unsigned int name)> FindVariable{0x5651F0};
 	WEAK symbol<unsigned int(unsigned int parentId, unsigned int name)> FindObject{0x565BD0};
@@ -44,6 +46,7 @@ namespace game
 
 	WEAK symbol<void(int clientNum, int type, const char* command)> SV_GameSendServerCommand{0x573220};
 	WEAK symbol<void(int arg, char* buffer, int bufferLength)> SV_Cmd_ArgvBuffer{0x5459F0};
+	WEAK symbol<void(unsigned int index, const char* val)> SV_SetConfigstring{0x574BD0};
 
 	WEAK symbol<void(unsigned int notifyListOwnerId, unsigned int stringValue, VariableValue* top)> VM_Notify{0x569720};
 	WEAK symbol<unsigned int(unsigned int localId, unsigned int pos, unsigned int paramcount)> VM_Execute{0x56DFE0};
@@ -60,12 +63,13 @@ namespace game
 
 	WEAK symbol<scrVmPub_t> scr_VmPub{0x20B4A80};
 	WEAK symbol<scrVarGlob_t> scr_VarGlob{0x1E72180};
-	WEAK symbol<function_stack_t> scr_function_stack{0x20B4A5C};
+	WEAK symbol<function_stack_t> scr_function_stack{0x20B4A5C};	
 
 	WEAK symbol<scr_classStruct_t*> g_classMap{0x8B4300};
 
 	WEAK symbol<gentity_s> g_entities{0x1A66E28};
 	WEAK symbol<client_t> svs_clients{0x4B5CF90};
+	WEAK symbol<game_hudelem_s> g_hudelems{0x1A39E00};
 
 	WEAK symbol<unsigned int> levelEntityId{0x208E1A4};
 	WEAK symbol<unsigned int> gameEntityId{0x208E1A8};

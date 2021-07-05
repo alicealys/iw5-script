@@ -298,4 +298,12 @@ namespace scripting
 
 		return {};
 	}
+
+	void check_thread()
+	{
+		if (std::this_thread::get_id() == scheduler::async_thread_id)
+		{
+			throw std::runtime_error("Not in server thread");
+		}
+	}
 }

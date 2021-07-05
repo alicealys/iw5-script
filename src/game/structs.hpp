@@ -303,6 +303,60 @@ namespace game
 		dvar_t* hashNext;
 	};
 
+	struct hudelem_s
+	{
+		int type;
+		float x;
+		float y;
+		float z;
+		int targetEntNum;
+		float fontScale;
+		float fromFontScale;
+		int fontScaleStartTime;
+		int fontScaleTime;
+		int font;
+		int alignOrg;
+		int alignScreen;
+		int color;
+		int fromColor;
+		int fadeStartTime;
+		int fadeTime;
+		int label;
+		int width;
+		int height;
+		int materialIndex;
+		int fromWidth;
+		int fromHeight;
+		int scaleStartTime;
+		int scaleTime;
+		float fromX;
+		float fromY;
+		int fromAlignOrg;
+		int fromAlignScreen;
+		int moveStartTime;
+		int moveTime;
+		int time;
+		int duration;
+		float value;
+		int text;
+		float sort;
+		int glowColor;
+		int fxBirthTime;
+		int fxLetterTime;
+		int fxDecayStartTime;
+		int fxDecayDuration;
+		int soundID;
+		int flags;
+	};
+
+	struct game_hudelem_s
+	{
+		hudelem_s elem;
+		int clientNum;
+		int team;
+		int archived;
+	};
+
 	struct gclient_s
 	{
 		char __pad0[0x35CC];
