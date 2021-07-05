@@ -318,4 +318,38 @@ namespace game
 		int flags;
 		char __pad2[0xEC];
 	};
+
+	enum netadrtype_t
+	{
+		NA_BOT = 0x0,
+		NA_BAD = 0x1,
+		NA_LOOPBACK = 0x2,
+		NA_BROADCAST = 0x3,
+		NA_IP = 0x4,
+	};
+
+	enum netsrc_t
+	{
+		NS_CLIENT1 = 0x0,
+		NS_MAXCLIENTS = 0x1,
+		NS_SERVER = 0x2,
+		NS_PACKET = 0x3,
+		NS_INVALID_NETSRC = 0x4,
+	};
+
+	struct netadr_s
+	{
+		netadrtype_t type;
+		unsigned char ip[4];
+		unsigned __int16 port;
+		netsrc_t localNetID;
+		unsigned int addrHandleIndex;
+	};
+
+	struct client_t
+	{
+		char __pad0[0x28];
+		netadr_s remote;
+		char __pad1[0x78658];
+	};
 }

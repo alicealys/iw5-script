@@ -17,6 +17,8 @@ namespace scripting::lua
 {
 	namespace
 	{
+		std::unordered_map<std::string, script_value> pers_table;
+
 		std::vector<std::string> load_game_constants()
 		{
 			std::vector<std::string> constants{};
@@ -91,7 +93,6 @@ namespace scripting::lua
 			entity_type["notifyonplayercommand"] = [](const entity& entity, const sol::this_state s, const std::string& notify, const std::string& cmd)
 			{
 				const auto entnum = entity.call("getentitynumber").as<int>();
-
 				notifies::add_cmd_notify(entnum, cmd, notify);
 			};
 
@@ -208,14 +209,12 @@ namespace scripting::lua
 			entity_type["getstruct"] = [](const entity& entity, const sol::this_state s)
 			{
 				const auto id = entity.get_entity_id();
-
 				return entity_to_struct(s, id);
 			};
 
 			entity_type["struct"] = sol::property([](const entity& entity, const sol::this_state s)
 			{
 				const auto id = entity.get_entity_id();
-
 				return entity_to_struct(s, id);
 			});
 
@@ -263,7 +262,6 @@ namespace scripting::lua
 				[](const entity& entity, const sol::this_state s)
 				{
 					const auto entref = entity.get_entity_reference();
-
 					if (entref.classnum != 0 || entref.entnum > 17)
 					{
 						return 0;
@@ -280,6 +278,28 @@ namespace scripting::lua
 					}
 
 					game::g_entities[entref.entnum].client->flags = value;
+				}
+			);
+
+			entity_type["address"] = sol::property(
+				[](const entity& entity, const sol::this_state s)
+				{
+					const auto entref = entity.get_entity_reference();
+
+					if (entref.classnum != 0 || entref.entnum > 17)
+					{
+						return sol::lua_value{};
+					}
+
+					const auto address = game::svs_clients[entref.entnum].remote.ip;
+					const std::string address_str = utils::string::va("%i.%i.%i.%i", 
+						address[0],
+						address[1], 
+						address[2], 
+						address[3]
+					);
+
+					return sol::lua_value{address_str};
 				}
 			);
 
@@ -582,6 +602,29 @@ namespace scripting::lua
 
 				return request;
 			};
+
+			state["pers"] = sol::table::create(state.lua_state());
+
+			auto pers_metatable = sol::table::create(state.lua_state());
+
+			pers_metatable[sol::meta_function::new_index] = [](const sol::table t, const sol::this_state s, 
+				const std::string& key, const sol::lua_value& value)
+			{
+				pers_table[key] = convert({s, value});
+			};
+
+			pers_metatable[sol::meta_function::index] = [](const sol::table t, const sol::this_state s, 
+				const std::string& key)
+			{
+				if (pers_table.find(key) == pers_table.end())
+				{
+					return sol::lua_value{s};
+				}
+
+				return convert(s, pers_table[key]);
+			};
+
+			state["pers"][sol::metatable_key] = pers_metatable;
 		}
 	}
 
