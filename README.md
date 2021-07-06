@@ -119,33 +119,16 @@ level:onnotify("connected", function(player)
     end)
 end)
 ```
-You can also do this to call them as methods:
+Or this:
 ```lua
-function game_:include(filename)
-    local functions = game:getfunctions(filename)
-
-    for k, v in pairs(functions) do
-        entity[k] = function(e, ...)
-            local args = {...}
-
-            v(e, table.unpack(args))
-        end
-
-        game_[k] = function(g, ...)
-            local args = {...}
-
-            v(level, table.unpack(args))
-        end
-    end
-end
-
 game:include("maps/mp/killstreaks/_killstreaks")
 
 level:onnotify("connected", function(player)
     player:notifyonplayercommand("use", "+actionslot 6")
 
     player:onnotify("use", function()
-        player:giveKillstreak("ac130", false, true, player, false)
+        -- Included function names are lowercase
+        player:givekillstreak("ac130", false, true, player, false)
     end)
 end)
 ```
