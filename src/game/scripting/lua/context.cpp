@@ -598,6 +598,7 @@ namespace scripting::lua
 					const auto options = va[0].as<sol::table>();
 
 					const auto fields = options["parameters"];
+					const auto body = options["body"];
 					const auto headers = options["headers"];
 
 					if (fields.get_type() == sol::type::table)
@@ -611,6 +612,11 @@ namespace scripting::lua
 
 							fields_string += key + "=" + value + "&";
 						}
+					}
+
+					if (body.get_type() == sol::type::string)
+					{
+						fields_string = body.get<std::string>();
 					}
 
 					if (headers.get_type() == sol::type::table)
