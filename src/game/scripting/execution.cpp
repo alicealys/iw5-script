@@ -306,4 +306,15 @@ namespace scripting
 			throw std::runtime_error("Not in server thread");
 		}
 	}
+
+	unsigned int make_array()
+	{
+		unsigned int index = 0;
+		const auto variable = game::AllocVariable(&index);
+		variable->w.type = game::SCRIPT_ARRAY;
+		variable->u.f.prev = 0;
+		variable->u.f.next = 0;
+
+		return index;
+	}
 }

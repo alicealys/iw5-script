@@ -5,6 +5,7 @@
 
 #include "../execution.hpp"
 #include "../functions.hpp"
+#include "../array.hpp"
 
 #include "../../../component/scripting.hpp"
 #include "../../../component/notifies.hpp"
@@ -71,6 +72,135 @@ namespace scripting::lua
 			vector_type["r"] = sol::property(&vector::get_x, &vector::set_x);
 			vector_type["g"] = sol::property(&vector::get_y, &vector::set_y);
 			vector_type["b"] = sol::property(&vector::get_z, &vector::set_z);
+
+			auto array_type = state.new_usertype<array>("array", sol::constructors<array()>());
+
+			array_type["erase"] = [](const array& array, const sol::this_state s,
+				const sol::lua_value& key)
+			{
+				if (key.is<int>())
+				{
+					const auto index = key.as<int>() - 1;
+					array.erase(index);
+				}
+				else if (key.is<std::string>())
+				{
+					const auto _key = key.as<std::string>();
+					array.erase(_key);
+				}
+			};
+
+			array_type["push"] = [](const array& array, const sol::this_state s,
+				const sol::lua_value& value)
+			{
+				const auto _value = convert(value);
+				array.push(_value);
+			};
+
+			array_type["pop"] = [](const array& array, const sol::this_state s)
+			{
+				return convert(s, array.pop());
+			};
+
+			array_type["get"] = [](const array& array, const sol::this_state s,
+				const sol::lua_value& key)
+			{
+				if (key.is<int>())
+				{
+					const auto index = key.as<int>() - 1;
+					return convert(s, array.get(index));
+				}
+				else if (key.is<std::string>())
+				{
+					const auto _key = key.as<std::string>();
+					return convert(s, array.get(_key));
+				}
+
+				return sol::lua_value{s, sol::lua_nil};
+			};
+
+			array_type["set"] = [](const array& array, const sol::this_state s,
+				const sol::lua_value& key, const sol::lua_value& value)
+			{
+				const auto _value = convert(value);
+				const auto nil = _value.get_raw().type == 0;
+
+				if (key.is<int>())
+				{
+					const auto index = key.as<int>() - 1;
+					nil ? array.erase(index) : array.set(index, _value);
+				}
+				else if (key.is<std::string>())
+				{
+					const auto _key = key.as<std::string>();
+					nil ? array.erase(_key) : array.set(_key, _value);
+				}
+			};
+
+			array_type["size"] = [](const array& array, const sol::this_state s)
+			{
+				return array.size();
+			};
+
+			array_type[sol::meta_function::length] = [](const array& array, const sol::this_state s)
+			{
+				return array.size();
+			};
+
+			array_type[sol::meta_function::index] = [](const array& array, const sol::this_state s,
+				const sol::lua_value& key)
+			{
+				if (key.is<int>())
+				{
+					const auto index = key.as<int>() - 1;
+					return convert(s, array.get(index));
+				}
+				else if (key.is<std::string>())
+				{
+					const auto _key = key.as<std::string>();
+					return convert(s, array.get(_key));
+				}
+
+				return sol::lua_value{s, sol::lua_nil};
+			};
+
+			array_type[sol::meta_function::new_index] = [](const array& array, const sol::this_state s,
+				const sol::lua_value& key, const sol::lua_value& value)
+			{
+				const auto _value = convert(value);
+				const auto nil = _value.get_raw().type == 0;
+
+				if (key.is<int>())
+				{
+					const auto index = key.as<int>() - 1;
+					nil ? array.erase(index) : array.set(index, _value);
+				}
+				else if (key.is<std::string>())
+				{
+					const auto _key = key.as<std::string>();
+					nil ? array.erase(_key) : array.set(_key, _value);
+				}
+			};
+
+			array_type["getkeys"] = [](const array& array, const sol::this_state s)
+			{
+				std::vector<sol::lua_value> keys;
+
+				const auto _keys = array.get_keys();
+				for (auto i = 0; i < _keys.size(); i++)
+				{
+					if (_keys[i].is_integer)
+					{
+						keys.push_back(_keys[i].index);
+					}
+					else
+					{
+						keys.push_back(_keys[i].key);
+					}
+				}
+				
+				return keys;
+			};
 
 			auto entity_type = state.new_usertype<entity>("entity");
 
@@ -288,7 +418,7 @@ namespace scripting::lua
 
 					if (entref.classnum != 0 || entref.entnum > 17)
 					{
-						return sol::lua_value{};
+						return sol::lua_value{s, sol::lua_nil};
 					}
 
 					const auto address = game::svs_clients[entref.entnum].remote.ip;
@@ -493,12 +623,7 @@ namespace scripting::lua
 			{
 				const auto id = *::game::gameEntityId;
 				const auto value = ::game::scr_VarGlob->childVariableValue[id];
-
-				::game::VariableValue variable{};
-				variable.type = (::game::scriptType_e)value.type;
-				variable.u.uintValue = value.u.u.uintValue;
-
-				return convert(s, variable);
+				return array(value.u.u.uintValue);
 			};
 
 			game_type["addcommand"] = [](const game&, const sol::this_state,
@@ -691,7 +816,7 @@ namespace scripting::lua
 			{
 				if (pers_table.find(key) == pers_table.end())
 				{
-					return sol::lua_value{s};
+					return sol::lua_value{s, sol::lua_nil};
 				}
 
 				return convert(s, pers_table[key]);

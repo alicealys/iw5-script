@@ -21,14 +21,11 @@ namespace scheduler
 		class task_pipeline
 		{
 		public:
-			int task_count = 0;
-
 			void add(task&& task)
 			{
 				new_callbacks_.access([&task, this](task_list& tasks)
 				{
 					tasks.emplace_back(std::move(task));
-					this->task_count = tasks.size();
 				});
 			}
 
@@ -69,8 +66,6 @@ namespace scheduler
 						{
 							++i;
 						}
-
-						this->task_count = tasks.size();
 					}
 				});
 			}
