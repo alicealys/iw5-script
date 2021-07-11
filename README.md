@@ -68,8 +68,33 @@ local ents = game:getentarray()
 for i = 1, #ents do
     print(ents[i])
 end
-
 ```
+You can also create new arrays to pass them to GSC functions:
+```lua
+local arr = array.new()
+arr:push(6)
+arr:push(1)
+arr:push(3)
+arr:push(7)
+arr:push(2)
+arr:push(9)
+
+arr = game:scriptcall("maps/mp/_utility", "quickSort", arr)
+
+for i = 1, #arr do
+    print(arr[i])
+end
+```
+List of all `array` methods:
+| Name | Description |
+| --- | --- |
+| set(*int*/*string* key, value) | Set an array's value by index (integer) or by string, also works using the `[]` operator |
+| get(*int*/*string* key) | Get an array's value by index (integer) or by string, also works using the `[]` operator |
+| erase(*int*/*string* key) | Erase an array's value by index (integer) or by string, also works by setting the value to nil |
+| size() | Returns array length |
+| getkeys() | Returns a table containing all the array's keys |
+| push(value) | Push a value to the array |
+| pop() | Deletes the last element of the array and returns it |
 
 # Structs
 GSC structs are also supported similarly as the arrays.
