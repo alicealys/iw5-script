@@ -24,7 +24,7 @@ namespace game
 
 	WEAK symbol<const dvar_t*(const char*)> Dvar_FindVar{0x5BDCC0};
 
-	WEAK symbol<char*(const char*)> I_CleanStr{0x0};
+	WEAK symbol<char*(const char*)> I_CleanStr{0x5C2C60};
 
 	WEAK symbol<unsigned int(const char* name)> G_LocalizedStringIndex{0x52D900};
 
