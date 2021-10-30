@@ -20,24 +20,24 @@ namespace scripting::lua::engine
 		std::string load_path()
 		{
 			const auto fs_basegame = game::Dvar_FindVar("fs_basegame");
-
 			return fs_basegame->current.string;
 		}
 
 		std::string get_path()
 		{
 			static const auto path = load_path();
-
 			return path;
 		}
 
-		void load_scripts()
+		void load_scripts(const std::string& script_dir)
 		{
-			const auto script_dir = "scripts/"s;
-
 			const auto path = get_path();
-
 			std::filesystem::current_path(path);
+
+			if (!utils::io::directory_exists(script_dir))
+			{
+				return;
+			}
 
 			const auto scripts = utils::io::list_files(script_dir);
 
@@ -54,7 +54,7 @@ namespace scripting::lua::engine
 	void start()
 	{
 		get_scripts().clear();
-		load_scripts();
+		load_scripts("scripts/");
 	}
 
 	void stop()
