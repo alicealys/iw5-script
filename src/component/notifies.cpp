@@ -235,6 +235,8 @@ namespace notifies
 			return variable.u.f.next;
 		}
 
+		scripting::script_value return_value{};
+
 		bool execute_vm_hook(unsigned int pos)
 		{
 			if (vm_execute_hooks.find(pos) == vm_execute_hooks.end())
@@ -247,6 +249,8 @@ namespace notifies
 				hook_enabled = true;
 				return false;
 			}
+
+			return_value = {};
 
 			const auto hook = vm_execute_hooks[pos];
 			const auto state = hook.lua_state();
@@ -269,14 +273,58 @@ namespace notifies
 			const auto value = scripting::lua::convert({state, result});
 			const auto type = value.get_raw().type;
 
-			game::Scr_ClearOutParams();
-
-			if (result.valid() && type && type < game::SCRIPT_END)
+			if (result.valid() && type && type != game::SCRIPT_END)
 			{
-				scripting::push_value(value);
+				return_value = value;
 			}
 
 			return true;
+		}
+
+		void push_return_value()
+		{
+			const auto raw = return_value.get_raw();
+
+			if (raw.type != game::SCRIPT_NONE)
+			{
+				++game::scr_function_stack->top;
+				game::AddRefToValue(raw.type, raw.u);
+				game::scr_function_stack->top->type = raw.type;
+				game::scr_function_stack->top->u = raw.u;
+				return_value = {};
+			}
+		}
+
+		__declspec(naked) void vm_execute_return_stub()
+		{
+			__asm
+			{
+				pushad
+				call push_return_value
+				popad
+
+				mov esi, 0x20B21FC
+				sub [esi], eax
+
+				mov esi, 0x20B4A60
+				mov eax, [esi]
+
+				push 0x56DBAA
+				retn
+			}
+		}
+
+		__declspec(naked) void vm_execute_return_stub2()
+		{
+			__asm
+			{
+				pushad
+				call push_return_value
+				popad
+
+				push 0x56B720
+				retn
+			}
 		}
 
 		__declspec(naked) void vm_execute_stub()
@@ -382,6 +430,8 @@ namespace notifies
 			scr_player_killed_hook.create(0x527CF0, scr_player_killed_stub);
 
 			utils::hook::jump(0x56B726, vm_execute_stub);
+			utils::hook::jump(0x56DB9F, vm_execute_return_stub);
+			utils::hook::jump(0x56B8AD, vm_execute_return_stub2);
 		}
 	};
 }

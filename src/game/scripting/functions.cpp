@@ -81,7 +81,7 @@ namespace scripting
 			}
 		}
 
-		return {};
+		return utils::string::va("_ID%i", id);
 	}
 
 	int find_token_id(const std::string& name)
