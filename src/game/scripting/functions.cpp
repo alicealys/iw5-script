@@ -59,15 +59,19 @@ namespace scripting
 
 		script_function get_function_by_index(const unsigned index)
 		{
-			static const auto function_table = 0x1D6EB34;
-			static const auto method_table = 0x1D4F258;
+			// Get plutonium's method call function
+			static const auto ptr = *reinterpret_cast<int*>(0x56CBDC + 0x1) + 0x56CBDC + 0x5;
+			// Get plutonium's custom function table
+			static const auto function_table = *reinterpret_cast<int*>(0x56C8EB + 0x3);
+			// Method table is at (method call function) + 0xA (0x6 + 0x4)
+			static const auto method_table = *reinterpret_cast<int*>(ptr + 0xA);
 
 			if (index < 0x1C7)
 			{
 				return reinterpret_cast<script_function*>(function_table)[index];
 			}
 
-			return reinterpret_cast<script_function*>(method_table)[index];
+			return reinterpret_cast<script_function*>(method_table)[index - 0x8000];
 		}
 	}
 
