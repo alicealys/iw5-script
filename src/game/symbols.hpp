@@ -75,7 +75,7 @@ namespace game
 
 	WEAK symbol<scrVmPub_t> scr_VmPub{0x20B4A80};
 	WEAK symbol<scrVarGlob_t> scr_VarGlob{0x1E72180};
-	WEAK symbol<function_stack_t> scr_function_stack{0x20B4A5C};	
+	WEAK symbol<function_stack_t> scr_function_stack{0x20B4A5C};
 
 	WEAK symbol<scr_classStruct_t*> g_classMap{0x8B4300};
 
@@ -85,4 +85,14 @@ namespace game
 
 	WEAK symbol<unsigned int> levelEntityId{0x208E1A4};
 	WEAK symbol<unsigned int> gameEntityId{0x208E1A8};
+
+	namespace plutonium
+	{
+		WEAK symbol<std::unordered_map<std::string, std::uint16_t>> function_map_rev{0x20692868};
+		WEAK symbol<std::unordered_map<std::string, std::uint16_t>> method_map_rev{0x20692888};
+		WEAK symbol<std::unordered_map<std::string, std::uint16_t>> token_map_rev{0x206928C8};
+		WEAK symbol<int(const char* fmt, ...)> printf{0x20867950};
+		WEAK symbol<void*> function_table{0x2068B418};
+		WEAK symbol<void*> method_table{0x2068BBE8};
+	}
 }

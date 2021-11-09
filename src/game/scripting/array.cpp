@@ -47,17 +47,16 @@ namespace scripting
 		this->add();
 	}
 
-	array::array(const array& other) : array(other.id_)
+	array::array(const array& other)
 	{
-		this->referenced = other.referenced;
+		this->operator=(other);
 	}
 
 	array::array(array&& other) noexcept
 	{
 		this->id_ = other.id_;
-		other.id_ = 0;
-
 		this->referenced = other.referenced;
+		other.id_ = 0;
 	}
 
 	array::array()
@@ -99,10 +98,9 @@ namespace scripting
 		{
 			this->release();
 			this->id_ = other.id_;
+			this->referenced = other.referenced;
 			this->add();
 		}
-
-		this->referenced = other.referenced;
 
 		return *this;
 	}
@@ -113,10 +111,9 @@ namespace scripting
 		{
 			this->release();
 			this->id_ = other.id_;
+			this->referenced = other.referenced;
 			other.id_ = 0;
 		}
-
-		this->referenced = other.referenced;
 
 		return *this;
 	}
@@ -137,9 +134,9 @@ namespace scripting
 		}
 	}
 
-	std::vector<array_key> array::get_keys() const
+	std::vector<script_value> array::get_keys() const
 	{
-		std::vector<array_key> result;
+		std::vector<script_value> result;
 
 		const auto offset = 0xC800 * (this->id_ & 1);
 		auto current = game::scr_VarGlob->objectVariableChildren[this->id_].firstChild;
@@ -157,16 +154,14 @@ namespace scripting
 			const auto string_value = (unsigned int)((unsigned __int8)var.name_lo + (var.k.keys.name_hi << 8));
 			const auto* str = game::SL_ConvertToString(string_value);
 
-			array_key key;
+			script_value key;
 			if (string_value < 0x40000 && str)
 			{
-				key.is_string = true;
-				key.key = str;
+				key = str;
 			}
 			else
 			{
-				key.is_integer = true;
-				key.index = (string_value - 0x800000) & 0xFFFFFF;
+				key = (string_value - 0x800000) & 0xFFFFFF;
 			}
 
 			result.push_back(key);
@@ -214,18 +209,6 @@ namespace scripting
 		return value;
 	}
 
-	script_value array::get(const array_key& key) const
-	{
-		if (key.is_integer)
-		{
-			return this->get(key.index);
-		}
-		else
-		{
-			return this->get(key.key);
-		}
-	}
-
 	script_value array::get(const std::string& key) const
 	{
 		const auto string_value = game::SL_GetString(key.data(), 0);
@@ -261,16 +244,19 @@ namespace scripting
 		return variable;
 	}
 
-	void array::set(const array_key& key, const script_value& value) const
+	script_value array::get(const script_value& key) const
 	{
-		if (key.is_integer)
+		if (key.is<int>())
 		{
-			this->set(key.index, value);
+			this->get(key.as<int>());
 		}
-		else
+
+		if (key.is<std::string>())
 		{
-			this->set(key.key, value);
+			this->get(key.as<std::string>());
 		}
+
+		return {};
 	}
 
 	void array::set(const std::string& key, const script_value& _value) const
@@ -311,6 +297,19 @@ namespace scripting
 
 		variable->type = value.type;
 		variable->u.u = value.u;
+	}
+
+	void array::set(const script_value& key, const script_value& _value) const
+	{
+		if (key.is<int>())
+		{
+			this->set(key.as<int>(), _value);
+		}
+
+		if (key.is<std::string>())
+		{
+			this->set(key.as<std::string>(), _value);
+		}
 	}
 
 	unsigned int array::get_entity_id() const

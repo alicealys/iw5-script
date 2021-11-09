@@ -9,12 +9,6 @@ namespace scripting::lua
 {
 	namespace
 	{
-		struct array_value
-		{
-			int index;
-			script_value value;
-		};
-
 		bool is_istring(const sol::lua_value& value)
 		{
 			if (!value.is<std::string>())
@@ -84,21 +78,22 @@ namespace scripting::lua
 		auto table = sol::table::create(state);
 		auto metatable = sol::table::create(state);
 
-		metatable[sol::meta_function::new_index] = [parent_id](const sol::table t, const sol::this_state s,
-			const std::string& field, const sol::lua_value& value)
-		{
-			const auto id = scripting::find_token_id(field);
+		const auto offset = 51200 * (parent_id & 1);
 
-			if (id == -1)
+		metatable[sol::meta_function::new_index] = [offset, parent_id](const sol::table t, const sol::this_state s,
+			const sol::lua_value& field, const sol::lua_value& value)
+		{
+			const auto id = field.is<std::string>()
+				? scripting::find_token_id(field.as<std::string>())
+				: field.as<int>();
+
+			if (!id)
 			{
 				return;
 			}
 
-			const auto offset = 51200 * (parent_id & 1);
-
 			const auto variable_id = game::GetVariable(parent_id, id);
 			const auto variable = &game::scr_VarGlob->childVariableValue[variable_id + offset];
-
 			const auto new_variable = convert({s, value}).get_raw();
 
 			game::AddRefToValue(new_variable.type, new_variable.u);
@@ -108,19 +103,24 @@ namespace scripting::lua
 			variable->u.u = new_variable.u;
 		};
 
-		metatable[sol::meta_function::index] = [parent_id](const sol::table t, const sol::this_state s,
-			const std::string& field)
+		metatable[sol::meta_function::index] = [offset, parent_id](const sol::table t, const sol::this_state s,
+			const sol::lua_value& field)
 		{
-			const auto id = scripting::find_token_id(field);
+			const auto id = field.is<std::string>()
+				? scripting::find_token_id(field.as<std::string>())
+				: field.as<int>();
 
-			if (id == -1)
+			if (!id)
 			{
-				return sol::lua_value{s};
+				return sol::lua_value{s, sol::lua_nil};
 			}
 
-			const auto offset = 51200 * (parent_id & 1);
+			const auto variable_id = game::FindVariable(parent_id, id);
+			if (!variable_id)
+			{
+				return sol::lua_value{s, sol::lua_nil};
+			}
 
-			const auto variable_id = game::GetVariable(parent_id, id);
 			const auto variable = game::scr_VarGlob->childVariableValue[variable_id + offset];
 
 			game::VariableValue result{};

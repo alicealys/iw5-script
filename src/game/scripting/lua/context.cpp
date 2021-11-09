@@ -189,14 +189,7 @@ namespace scripting::lua
 				const auto _keys = array.get_keys();
 				for (auto i = 0; i < _keys.size(); i++)
 				{
-					if (_keys[i].is_integer)
-					{
-						keys.push_back(_keys[i].index);
-					}
-					else
-					{
-						keys.push_back(_keys[i].key);
-					}
+					keys.push_back(convert(s, _keys[i]));
 				}
 				
 				return keys;
@@ -855,6 +848,18 @@ namespace scripting::lua
 		this->state_["scriptdir"] = [this]()
 		{
 			return this->folder_;
+		};
+
+		this->state_["print"] = [](const sol::this_state s, sol::variadic_args va)
+		{
+			sol::state_view view = s;
+			for (const auto& arg : va)
+			{
+				const auto string = view["tostring"](arg).get<std::string>();
+				printf("%s\t", string.data());
+			}
+
+			printf("\n");
 		};
 
 		setup_entity_type(this->state_, this->event_handler_, this->scheduler_);

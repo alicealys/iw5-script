@@ -59,12 +59,8 @@ namespace scripting
 
 		script_function get_function_by_index(const unsigned index)
 		{
-			// Get plutonium's method call function
-			static const auto ptr = *reinterpret_cast<int*>(0x56CBDC + 0x1) + 0x56CBDC + 0x5;
-			// Get plutonium's custom function table
-			static const auto function_table = *reinterpret_cast<int*>(0x56C8EB + 0x3);
-			// Method table is at (method call function) + 0xA (0x6 + 0x4)
-			static const auto method_table = *reinterpret_cast<int*>(ptr + 0xA);
+			static const auto function_table = game::plutonium::function_table.get();
+			static const auto method_table = game::plutonium::method_table.get();
 
 			if (index < 0x1C7)
 			{
