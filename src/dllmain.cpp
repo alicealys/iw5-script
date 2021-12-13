@@ -5,12 +5,12 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 {
     if (ul_reason_for_call == DLL_PROCESS_ATTACH)
     {
-        const auto value = *reinterpret_cast<DWORD*>(0x20800000);
-        if (value != 0x2A6784ED)
+        const auto value = *reinterpret_cast<DWORD*>(0x20900000);
+        if (value != 0xF0681B6A)
         {
             MessageBoxA(NULL,
                 "This version of iw5-script is outdated.\n" \
-                "Download the latest dll from here: https://github.com/fedddddd/iw5-script/releases" \
+                "Download the latest dll from here: https://github.com/fedddddd/iw5-gsc-utils/releases" \
                 , "ERROR", MB_ICONERROR);
 
             return FALSE;
