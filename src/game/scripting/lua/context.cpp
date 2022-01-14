@@ -256,11 +256,11 @@ namespace scripting::lua
 				notify(entity, event, arguments);
 			};
 
-			entity_type["onnotify"] = [&handler](const entity& entity, const std::string& event,
-			                                     const event_callback& callback)
+			entity_type["onnotify"] = [&handler](const entity& entity, const sol::this_state s, 
+				const std::string& event, const event_callback& callback)
 			{
 				event_listener listener{};
-				listener.callback = callback;
+				listener.callback = {s, callback};
 				listener.entity = entity;
 				listener.event = event;
 				listener.is_volatile = false;
@@ -268,11 +268,11 @@ namespace scripting::lua
 				return handler.add_event_listener(std::move(listener));
 			};
 
-			entity_type["onnotifyonce"] = [&handler](const entity& entity, const std::string& event,
-			                                         const event_callback& callback)
+			entity_type["onnotifyonce"] = [&handler](const entity& entity, const sol::this_state s,
+				const std::string& event, const event_callback& callback)
 			{
 				event_listener listener{};
-				listener.callback = callback;
+				listener.callback = {s, callback};
 				listener.entity = entity;
 				listener.event = event;
 				listener.is_volatile = true;
@@ -482,16 +482,16 @@ namespace scripting::lua
 				return convert(s, call(function, arguments));
 			};
 
-			game_type["ontimeout"] = [&scheduler](const game&, const sol::protected_function& callback,
-			                                      const long long milliseconds)
+			game_type["ontimeout"] = [&scheduler](const game&, const sol::this_state s, 
+				const sol::protected_function& callback, const long long milliseconds)
 			{
-				return scheduler.add(callback, milliseconds, true);
+				return scheduler.add({s, callback}, milliseconds, true);
 			};
 
-			game_type["oninterval"] = [&scheduler](const game&, const sol::protected_function& callback,
-			                                       const long long milliseconds)
+			game_type["oninterval"] = [&scheduler](const game&, const sol::this_state s, 
+				const sol::protected_function& callback, const long long milliseconds)
 			{
-				return scheduler.add(callback, milliseconds, false);
+				return scheduler.add({s, callback}, milliseconds, false);
 			};
 
 			game_type["executecommand"] = [](const game&, const std::string& command)
@@ -510,19 +510,22 @@ namespace scripting::lua
 					84, message.data()));
 			};
 
-			game_type["onplayerdamage"] = [](const game&, const sol::protected_function& callback)
+			game_type["onplayerdamage"] = [](const game&, const sol::this_state s, 
+				const sol::protected_function& callback)
 			{
-				notifies::add_player_damage_callback(callback);
+				notifies::add_player_damage_callback({s, callback});
 			};
 
-			game_type["onplayerkilled"] = [](const game&, const sol::protected_function& callback)
+			game_type["onplayerkilled"] = [](const game&, const sol::this_state s, 
+				const sol::protected_function& callback)
 			{
-				notifies::add_player_killed_callback(callback);
+				notifies::add_player_killed_callback({s, callback});
 			};
 
-			game_type["onplayersay"] = [](const game&, const sol::protected_function& callback)
+			game_type["onplayersay"] = [](const game&, const sol::this_state s, 
+				const sol::protected_function& callback)
 			{
-				notifies::add_player_say_callback(callback);
+				notifies::add_player_say_callback({s, callback});
 			};
 
 			game_type["scriptcall"] = [](const game&, const sol::this_state s, const std::string& filename,

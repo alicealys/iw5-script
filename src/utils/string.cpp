@@ -1,4 +1,8 @@
 #include <stdinc.hpp>
+#include "string.hpp"
+#include <sstream>
+#include <cstdarg>
+#include <algorithm>
 
 namespace utils::string
 {
@@ -32,9 +36,9 @@ namespace utils::string
 	std::string to_lower(std::string text)
 	{
 		std::transform(text.begin(), text.end(), text.begin(), [](const char input)
-		{
-			return static_cast<char>(tolower(input));
-		});
+			{
+				return static_cast<char>(tolower(input));
+			});
 
 		return text;
 	}
@@ -42,9 +46,9 @@ namespace utils::string
 	std::string to_upper(std::string text)
 	{
 		std::transform(text.begin(), text.end(), text.begin(), [](const char input)
-		{
-			return static_cast<char>(toupper(input));
-		});
+			{
+				return static_cast<char>(toupper(input));
+			});
 
 		return text;
 	}
@@ -58,6 +62,11 @@ namespace utils::string
 	{
 		if (substring.size() > text.size()) return false;
 		return std::equal(substring.rbegin(), substring.rend(), text.rbegin());
+	}
+
+	bool is_numeric(const std::string& text)
+	{
+		return std::to_string(atoi(text.data())) == text;
 	}
 
 	std::string dump_hex(const std::string& data, const std::string& separator)
@@ -147,5 +156,17 @@ namespace utils::string
 		}
 
 		return str;
+	}
+
+	std::string get_timestamp()
+	{
+		tm ltime{};
+		char timestamp[MAX_PATH] = { 0 };
+		const auto time = _time64(nullptr);
+
+		_localtime64_s(&ltime, &time);
+		strftime(timestamp, sizeof(timestamp) - 1, "%Y-%m-%d-%H-%M-%S", &ltime);
+
+		return timestamp;
 	}
 }

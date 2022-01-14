@@ -33,6 +33,14 @@
 
 using namespace std::literals;
 
+#ifdef max
+#undef max
+#endif
+
+#ifdef min
+#undef min
+#endif
+
 #include <gsl/gsl>
 #include <curl/curl.h>
 #include <MinHook.h>
