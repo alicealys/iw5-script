@@ -683,6 +683,28 @@ namespace scripting::lua
 				}
 			};
 
+			game_type["getvarusage"] = [](const game&)
+			{
+				auto count = 0;
+				for (auto i = 0; i < 36864; i++)
+				{
+					const auto value = ::game::scr_VarGlob->objectVariableValue[i];
+					count += value.w.type != 24;
+				}
+				return count;
+			};
+
+			game_type["getchildvarusage"] = [](const game&)
+			{
+				auto count = 0;
+				for (auto i = 0; i < 102400; i++)
+				{
+					const auto value = ::game::scr_VarGlob->childVariableValue[i];
+					count += value.type != 24;
+				}
+				return count;
+			};
+
 			state["http"] = sol::table::create(state.lua_state());
 
 			state["http"]["get"] = [](const sol::this_state, const std::string& url,
