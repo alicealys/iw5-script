@@ -43,7 +43,6 @@ namespace scripting
 	array::array(const unsigned int id)
 		: id_(id)
 	{
-		this->referenced = game::scr_VarGlob->objectVariableValue[this->id_].u.f.prev > 0;
 		this->add();
 	}
 
@@ -55,33 +54,12 @@ namespace scripting
 	array::array(array&& other) noexcept
 	{
 		this->id_ = other.id_;
-		this->referenced = other.referenced;
 		other.id_ = 0;
 	}
 
 	array::array()
 	{
 		this->id_ = make_array();
-	}
-	
-	array::array(std::vector<script_value> values)
-	{
-		this->id_ = make_array();
-
-		for (const auto& value : values)
-		{
-			this->push(value);
-		}
-	}
-
-	array::array(std::unordered_map<std::string, script_value> values)
-	{
-		this->id_ = make_array();
-
-		for (const auto& value : values)
-		{
-			this->set(value.first, value.second);
-		}
 	}
 
 	array::~array()
@@ -95,7 +73,6 @@ namespace scripting
 		{
 			this->release();
 			this->id_ = other.id_;
-			this->referenced = other.referenced;
 			this->add();
 		}
 
@@ -108,7 +85,6 @@ namespace scripting
 		{
 			this->release();
 			this->id_ = other.id_;
-			this->referenced = other.referenced;
 			other.id_ = 0;
 		}
 
@@ -117,17 +93,17 @@ namespace scripting
 
 	void array::add() const
 	{
-		if (this->id_ && !this->referenced)
+		if (this->id_)
 		{
-			game::AddRefToValue(game::SCRIPT_OBJECT, {static_cast<int>(this->id_)});
+			game::AddRefToObject(this->id_);
 		}
 	}
 
 	void array::release() const
 	{
-		if (this->id_ && !this->referenced)
+		if (this->id_)
 		{
-			game::RemoveRefToValue(game::SCRIPT_OBJECT, {static_cast<int>(this->id_)});
+			game::RemoveRefToObject(this->id_);
 		}
 	}
 

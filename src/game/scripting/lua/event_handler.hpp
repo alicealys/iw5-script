@@ -1,4 +1,5 @@
 #pragma once
+#include <utils/concurrent_list.hpp>
 
 namespace scripting::lua
 {
@@ -8,7 +9,7 @@ namespace scripting::lua
 	class event_listener_handle
 	{
 	public:
-		uint64_t id = 0;
+		unsigned long long id = 0;
 	};
 
 	class event_listener final : public event_listener_handle
@@ -18,8 +19,6 @@ namespace scripting::lua
 		entity entity{};
 		event_callback callback = {};
 		bool is_volatile = false;
-		bool is_deleted = false;
-		std::vector<std::pair<scripting::entity, std::string>> endon_conditions{};
 	};
 
 	class event_handler final
@@ -43,16 +42,10 @@ namespace scripting::lua
 		sol::state& state_;
 		std::atomic_int64_t current_listener_id_ = 0;
 
-		using task_list = std::vector<event_listener>;
-		utils::concurrency::container<task_list> new_callbacks_;
-		utils::concurrency::container<task_list, std::recursive_mutex> callbacks_;
+		utils::concurrent_list<event_listener> event_listeners_;
+
+		void dispatch_to_specific_listeners(const event& event, const event_arguments& arguments);
 
 		void remove(const event_listener_handle& handle);
-		void merge_callbacks();
-		void handle_endon_conditions(const event& event);
-
-		void add_endon_condition(const event_listener_handle& handle, const entity& entity, const std::string& event);
-
-		event_arguments build_arguments(const event& event) const;
 	};
 }

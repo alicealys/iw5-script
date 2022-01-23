@@ -19,9 +19,6 @@ namespace scripting
 		array();
 		array(const unsigned int);
 
-		array(std::vector<script_value>);
-		array(std::unordered_map<std::string, script_value>);
-
 		array(const array& other);
 		array(array&& other) noexcept;
 
@@ -81,7 +78,6 @@ namespace scripting
 		void add() const;
 		void release() const;
 
-		bool referenced = false;
 		unsigned int id_{};
 	};
 }

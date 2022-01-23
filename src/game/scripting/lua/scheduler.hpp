@@ -1,4 +1,5 @@
 #pragma once
+#include <utils/concurrent_list.hpp>
 
 namespace scripting::lua
 {
@@ -7,18 +8,16 @@ namespace scripting::lua
 	class task_handle
 	{
 	public:
-		uint64_t id = 0;
+		unsigned long long id = 0;
 	};
 
 	class task final : public task_handle
 	{
 	public:
-		std::chrono::steady_clock::time_point last_call{};
+		std::chrono::steady_clock::time_point last_execution{};
 		sol::protected_function callback{};
 		std::chrono::milliseconds delay{};
 		bool is_volatile = false;
-		bool is_deleted = false;
-		std::vector<std::pair<entity, std::string>> endon_conditions{};
 	};
 
 	class scheduler final
@@ -32,7 +31,6 @@ namespace scripting::lua
 		scheduler(const scheduler&) = delete;
 		scheduler& operator=(const scheduler&) = delete;
 
-		void dispatch(const event& event);
 		void run_frame();
 		void clear();
 
@@ -40,14 +38,9 @@ namespace scripting::lua
 		task_handle add(const sol::protected_function& callback, std::chrono::milliseconds delay, bool is_volatile);
 
 	private:
-		using task_list = std::vector<task>;
-		utils::concurrency::container<task_list> new_callbacks_;
-		utils::concurrency::container<task_list, std::recursive_mutex> callbacks_;
+		utils::concurrent_list<task> tasks_;
 		std::atomic_int64_t current_task_id_ = 0;
 
-		void add_endon_condition(const task_handle& handle, const entity& entity, const std::string& event);
-
 		void remove(const task_handle& handle);
-		void merge_callbacks();
 	};
 }
