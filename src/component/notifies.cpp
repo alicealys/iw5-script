@@ -204,8 +204,9 @@ namespace notifies
 					{
 						const auto player = _player.as<scripting::entity>();
 
-						scripting::notify(level, "say", {player, message, teamchat});
+						scripting::notify(level, "say_", {player, message, teamchat});
 						scripting::notify(player, "say", {message, teamchat});
+						scripting::notify(player, "say_", {message, teamchat});
 					}
 				});
 
