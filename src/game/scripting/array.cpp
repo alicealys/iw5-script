@@ -4,6 +4,32 @@
 
 namespace scripting
 {
+	namespace
+	{
+		// using this class (specifically adding/removing ref)
+		// with `player.pers` causes a crash in Scr_EvalArrayRef, 
+		// this seems to be the only case in which this happens 
+		// and i don't know why yet so ill just use this shitty 
+		// work around for now. pers is persistent so it doesnt
+		// need to be referenced anyways
+
+		bool is_script_pers(unsigned int id)
+		{
+			const auto sv_maxclients = game::Dvar_FindVar("sv_maxclients");
+
+			for (auto i = 0; i < sv_maxclients->current.integer; i++)
+			{
+				const auto client = &game::svs_clients[i];
+				if (id == client->scriptId)
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+	}
+
 	array_value::array_value(unsigned int parent_id, unsigned int id)
 		: id_(id)
 		, parent_id_(parent_id)
@@ -93,7 +119,7 @@ namespace scripting
 
 	void array::add() const
 	{
-		if (this->id_)
+		if (this->id_ && !is_script_pers(this->id_))
 		{
 			game::AddRefToObject(this->id_);
 		}
@@ -101,7 +127,7 @@ namespace scripting
 
 	void array::release() const
 	{
-		if (this->id_)
+		if (this->id_ && !is_script_pers(this->id_))
 		{
 			game::RemoveRefToObject(this->id_);
 		}

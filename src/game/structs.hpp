@@ -404,6 +404,12 @@ namespace game
 	{
 		char __pad0[0x28];
 		netadr_s remote;
-		char __pad1[0x78658];
+		char __pad1[0x41C76];
+		unsigned __int16 scriptId; // 269490
+		int bIsTestClient; // 269492
+		int serverId; // 269496
+		char __pad2[0x369DC];
 	};
+
+	static_assert(sizeof(client_t) == 493208);
 }
