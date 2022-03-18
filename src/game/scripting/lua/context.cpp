@@ -47,6 +47,15 @@ namespace scripting::lua
 			return state["tostring"](o);
 		}
 
+		struct http_request
+		{
+			sol::protected_function on_error;
+			sol::protected_function on_progress;
+			sol::protected_function on_load;
+		};
+
+		std::unordered_map<uint64_t, http_request> http_requests;
+
 		void setup_entity_type(sol::state& state, event_handler& handler, scheduler& scheduler)
 		{
 			state["level"] = entity{*game::levelEntityId};
@@ -186,10 +195,10 @@ namespace scripting::lua
 			{
 				std::vector<sol::lua_value> keys;
 
-				const auto _keys = array.get_keys();
-				for (auto i = 0; i < _keys.size(); i++)
+				const auto keys_ = array.get_keys();
+				for (const auto& key : keys_)
 				{
-					keys.push_back(convert(s, _keys[i]));
+					keys.push_back(convert(s, key));
 				}
 				
 				return keys;
@@ -429,8 +438,6 @@ namespace scripting::lua
 			entity_type["updatetext"] = [](const entity& entity, const sol::this_state s,
 				const std::string& text)
 			{
-				check_thread();
-
 				const auto entref = entity.get_entity_reference();
 				if (entref.classnum != 1)
 				{
@@ -705,6 +712,8 @@ namespace scripting::lua
 				return count;
 			};
 
+			static uint64_t task_id = 0;
+
 			state["http"] = sol::table::create(state.lua_state());
 
 			state["http"]["get"] = [](const sol::this_state, const std::string& url,
@@ -717,20 +726,36 @@ namespace scripting::lua
 					async = va[0].as<bool>();
 				}
 
-				::scheduler::once([url, callback]()
+				const auto cur_task_id = task_id++;
+				auto request_callbacks = &http_requests[cur_task_id];
+				request_callbacks->on_load = callback;
+
+				::scheduler::once([url, cur_task_id]()
 				{
+					if (http_requests.find(cur_task_id) == http_requests.end())
+					{
+						return;
+					}
+
 					const auto data = utils::http::get_data(url);
-					const auto has_value = data.has_value();
-					const auto result = callback(has_value ? data.value().buffer : "", has_value);
-					handle_error(result);
-				}, async ? ::scheduler::pipeline::async : ::scheduler::pipeline::server);
+					::scheduler::once([data, cur_task_id]()
+					{
+						if (http_requests.find(cur_task_id) == http_requests.end())
+						{
+							return;
+						}
+
+						const auto& request_callbacks_ = http_requests[cur_task_id];
+						const auto has_value = data.has_value();
+						handle_error(request_callbacks_.on_load(has_value ? data.value().buffer : "", has_value));
+						http_requests.erase(cur_task_id);
+					}, ::scheduler::pipeline::server);
+				}, ::scheduler::pipeline::async);
 			};
 
 			state["http"]["request"] = [](const sol::this_state s, const std::string& url, sol::variadic_args va)
 			{
 				auto request = sol::table::create(s.lua_state());
-				
-				bool async = false;
 
 				std::string buffer{};
 				std::string fields_string{};
@@ -776,44 +801,68 @@ namespace scripting::lua
 					}
 				}
 
-				if (va.size() >= 2 && va[1].get_type() == sol::type::boolean)
-				{
-					async = va[1].as<bool>();
-				}
-
 				request["onerror"] = []() {};
 				request["onprogress"] = []() {};
 				request["onload"] = []() {};
 
-				request["send"] = [async, url, fields_string, request, headers_map]()
+				request["send"] = [url, fields_string, request, headers_map]()
 				{
-					::scheduler::once([url, fields_string, request, headers_map]()
+					const auto cur_task_id = task_id++;
+					auto request_callbacks = &http_requests[cur_task_id];
+					request_callbacks->on_error = request["onerror"];
+					request_callbacks->on_progress = request["onprogress"];
+					request_callbacks->on_load = request["onload"];
+
+					::scheduler::once([url, fields_string, cur_task_id, headers_map]()
 					{
-						const auto result = utils::http::get_data(url, fields_string, headers_map, [request](size_t value)
+						if (http_requests.find(cur_task_id) == http_requests.end())
 						{
-							const auto result = request["onprogress"](value);
-							handle_error(result);
+							return;
+						}
+
+						const auto result = utils::http::get_data(url, fields_string, headers_map, [cur_task_id](size_t value)
+						{
+							::scheduler::once([cur_task_id, value]()
+							{
+								if (http_requests.find(cur_task_id) == http_requests.end())
+								{
+									return;
+								}
+
+								const auto& request_callbacks_ = http_requests[cur_task_id];
+								handle_error(request_callbacks_.on_progress(value));
+							}, ::scheduler::pipeline::server);
 						});
 
-						if (!result.has_value())
+						::scheduler::once([cur_task_id, result]()
 						{
-							const auto result = request["onerror"]("Uknown", -1);
-							handle_error(result);
-						}
+							if (http_requests.find(cur_task_id) == http_requests.end())
+							{
+								return;
+							}
 
-						const auto _result = result.value();
+							const auto& request_callbacks_ = http_requests[cur_task_id];
 
-						if (_result.code == CURLE_OK)
-						{
-							const auto result = request["onload"](_result.buffer);
-							handle_error(result);
-						}
-						else
-						{
-							const auto result = request["onerror"](curl_easy_strerror(_result.code), _result.code);
-							handle_error(result);
-						}
-					}, async ? ::scheduler::pipeline::async : ::scheduler::pipeline::server);
+							if (!result.has_value())
+							{
+								request_callbacks_.on_error("Unknown", -1);
+								return;
+							}
+
+							const auto& http_result = result.value();
+
+							if (http_result.code == CURLE_OK)
+							{
+								handle_error(request_callbacks_.on_load(http_result.buffer));
+							}
+							else
+							{
+								handle_error(request_callbacks_.on_error(curl_easy_strerror(http_result.code), http_result.code));
+							}
+
+							http_requests.erase(cur_task_id);
+						}, ::scheduler::pipeline::server);
+					}, ::scheduler::pipeline::async);
 				};
 
 				return request;
@@ -895,6 +944,7 @@ namespace scripting::lua
 
 	context::~context()
 	{
+		http_requests.clear();
 		this->state_.collect_garbage();
 		this->scheduler_.clear();
 		this->event_handler_.clear();

@@ -46,7 +46,7 @@ namespace scripting
 					e.arguments.emplace_back(*value);
 				}
 
-				if (e.name == "connected")
+				if (e.name == "entitydeleted")
 				{
 					const auto entity = e.arguments[0].as<scripting::entity>();
 
@@ -80,8 +80,6 @@ namespace scripting
 
 		void g_shutdown_game_stub(const int free_scripts)
 		{
-			scheduler::clear_tasks(scheduler::pipeline::async);
-
 			lua::engine::stop();
 			g_shutdown_game_hook.invoke<void>(free_scripts);
 		}

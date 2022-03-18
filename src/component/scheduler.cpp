@@ -5,8 +5,6 @@
 
 namespace scheduler
 {
-	std::thread::id async_thread_id;
-
 	namespace
 	{
 		struct task
@@ -26,15 +24,6 @@ namespace scheduler
 				new_callbacks_.access([&task, this](task_list& tasks)
 				{
 					tasks.emplace_back(std::move(task));
-				});
-			}
-
-			void clear()
-			{
-				callbacks_.access([&](task_list& tasks)
-				{
-					this->merge_callbacks();
-					tasks.clear();
 				});
 			}
 
@@ -103,11 +92,6 @@ namespace scheduler
 		}
 	}
 
-	void clear_tasks(const pipeline type)
-	{
-		return pipelines[type].clear();
-	}
-
 	void schedule(const std::function<bool()>& callback, const pipeline type,
 		const std::chrono::milliseconds delay)
 	{
@@ -156,8 +140,6 @@ namespace scheduler
 					std::this_thread::sleep_for(10ms);
 				}
 			});
-
-			async_thread_id = thread.get_id();
 
 			utils::hook::call(0x50CEDC, server_frame_stub);
 		}

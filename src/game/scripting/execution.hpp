@@ -36,7 +36,5 @@ namespace scripting
 
 	void notify(const entity& entity, const std::string& event, const std::vector<script_value>& arguments);
 
-	void check_thread();
-
 	unsigned int make_array();
 }

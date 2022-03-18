@@ -52,7 +52,7 @@ namespace scripting
 
 			auto v6 = game::scr_VmPub->top;
 			auto v7 = game::scr_VmPub->inparamcount - paramcount;
-			auto v8 = &game::scr_VmPub->top[-paramcount];
+			auto v8 = &game::scr_VmPub->top[-1 * static_cast<int>(paramcount)];
 
 			if (id)
 			{
@@ -86,11 +86,6 @@ namespace scripting
 
 	void notify(const entity& entity, const std::string& event, const std::vector<script_value>& arguments)
 	{
-		if (std::this_thread::get_id() == scheduler::async_thread_id)
-		{
-			throw std::runtime_error("Not in server thread");
-		}
-
 		stack_isolation _;
 		for (auto i = arguments.rbegin(); i != arguments.rend(); ++i)
 		{
@@ -104,11 +99,6 @@ namespace scripting
 	script_value call_function(const std::string& name, const entity& entity,
 		const std::vector<script_value>& arguments)
 	{
-		if (std::this_thread::get_id() == scheduler::async_thread_id)
-		{
-			throw std::runtime_error("Not in server thread");
-		}
-
 		const auto entref = entity.get_entity_reference();
 
 		const auto is_method_call = *reinterpret_cast<const int*>(&entref) != -1;
@@ -149,11 +139,6 @@ namespace scripting
 
 	script_value exec_ent_thread(const entity& entity, unsigned int pos, const std::vector<script_value>& arguments)
 	{
-		if (std::this_thread::get_id() == scheduler::async_thread_id)
-		{
-			throw std::runtime_error("Not in server thread");
-		}
-
 		const auto id = entity.get_entity_id();
 
 		stack_isolation _;
@@ -237,11 +222,6 @@ namespace scripting
 
 	void set_entity_field(const entity& entity, const std::string& field, const script_value& value)
 	{
-		if (std::this_thread::get_id() == scheduler::async_thread_id)
-		{
-			throw std::runtime_error("Not in server thread");
-		}
-
 		const auto entref = entity.get_entity_reference();
 		const int id = get_field_id(entref.classnum, field);
 
@@ -266,11 +246,6 @@ namespace scripting
 
 	script_value get_entity_field(const entity& entity, const std::string& field)
 	{
-		if (std::this_thread::get_id() == scheduler::async_thread_id)
-		{
-			throw std::runtime_error("Not in server thread");
-		}
-
 		const auto entref = entity.get_entity_reference();
 		const auto id = get_field_id(entref.classnum, field);
 
@@ -297,14 +272,6 @@ namespace scripting
 		}
 
 		return {};
-	}
-
-	void check_thread()
-	{
-		if (std::this_thread::get_id() == scheduler::async_thread_id)
-		{
-			throw std::runtime_error("Not in server thread");
-		}
 	}
 
 	unsigned int make_array()
