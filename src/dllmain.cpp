@@ -11,7 +11,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
         {
             MessageBoxA(NULL,
                 "This version of iw5-script is outdated.\n" \
-                "Download the latest dll from here: https://github.com/fedddddd/iw5-gsc-utils/releases",
+                "Download the latest dll from here: https://github.com/fedddddd/iw5-script/releases",
                 "ERROR", MB_ICONERROR);
 
             return FALSE;
