@@ -206,6 +206,7 @@ namespace scripting::lua
 
 			auto entity_type = state.new_usertype<entity>("entity");
 
+			const auto& method_map = *::game::plutonium::method_map_rev;
 			for (const auto& func : method_map)
 			{
 				const auto name = utils::string::to_lower(func.first);
@@ -460,6 +461,7 @@ namespace scripting::lua
 			auto game_type = state.new_usertype<game>("game_");
 			state["game"] = game();
 
+			const auto& function_map = *::game::plutonium::function_map_rev;
 			for (const auto& func : function_map)
 			{
 				const auto name = utils::string::to_lower(func.first);
@@ -688,17 +690,6 @@ namespace scripting::lua
 						notifies::hook_enabled = true;
 					};
 				}
-			};
-
-			game_type["getvarusage"] = [](const game&)
-			{
-				auto count = 0;
-				for (auto i = 0; i < 36864; i++)
-				{
-					const auto value = ::game::scr_VarGlob->objectVariableValue[i];
-					count += value.w.type != 24;
-				}
-				return count;
 			};
 
 			game_type["getchildvarusage"] = [](const game&)

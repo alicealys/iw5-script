@@ -45,6 +45,7 @@
 #include <atlcomcli.h>
 #include <optional>
 #include <future>
+#include <Psapi.h>
 
 #pragma comment(lib, "urlmon.lib")
 #pragma comment(lib, "ws2_32.lib")
