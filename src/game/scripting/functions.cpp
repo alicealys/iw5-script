@@ -100,13 +100,16 @@ namespace scripting
 			return result->second;
 		}
 
-		return -1;
+		return game::SL_GetCanonicalString(name.data());
 	}
 
 	script_function find_function(const std::string& name, const bool prefer_global)
 	{
 		const auto index = find_function_index(name, prefer_global);
-		if (index < 0) return nullptr;
+		if (index < 0)
+		{
+			return nullptr;
+		}
 
 		return get_function_by_index(index);
 	}

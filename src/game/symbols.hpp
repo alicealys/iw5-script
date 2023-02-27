@@ -24,6 +24,8 @@ namespace game
 
 	WEAK symbol<const dvar_t*(const char*)> Dvar_FindVar{0x5BDCC0};
 
+	WEAK symbol<XAssetHeader(XAssetType type, const char* name, int allowCreateDefault)> DB_FindXAssetHeader{0x4CA620};
+
 	WEAK symbol<char*(const char*)> I_CleanStr{0x5C2C60};
 
 	WEAK symbol<unsigned int(const char* name)> G_LocalizedStringIndex{0x52D900};
@@ -55,6 +57,7 @@ namespace game
 
 	WEAK symbol<unsigned int(const char* str, unsigned int user)> SL_GetString{0x5649E0};
 	WEAK symbol<const char*(unsigned int stringValue)> SL_ConvertToString{0x564270};
+	WEAK symbol<unsigned int(const char* str)> SL_GetCanonicalString{0x5619A0};
 
 	WEAK symbol<void(int clientNum, int type, const char* command)> SV_GameSendServerCommand{0x573220};
 	WEAK symbol<void(int arg, char* buffer, int bufferLength)> SV_Cmd_ArgvBuffer{0x5459F0};

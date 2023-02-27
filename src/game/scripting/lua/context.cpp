@@ -703,6 +703,17 @@ namespace scripting::lua
 				return count;
 			};
 
+			game_type["getweaponname"] = [](const game&, const std::string& weapon)
+			{
+				const auto asset = ::game::DB_FindXAssetHeader(::game::ASSET_TYPE_WEAPON, weapon.data(), 0).weapon;
+				if (asset == nullptr)
+				{
+					return "";
+				}
+
+				return asset->szDisplayName;
+			};
+
 			static uint64_t task_id = 0;
 
 			state["http"] = sol::table::create(state.lua_state());
