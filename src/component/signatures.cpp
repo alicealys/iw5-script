@@ -8,7 +8,7 @@ namespace signatures
 	{
 		MODULEINFO info{};
 		GetModuleInformation(GetCurrentProcess(),
-			GetModuleHandle(L"plutonium-bootstrapper-win32.exe"), &info, sizeof(MODULEINFO));
+			GetModuleHandle("plutonium-bootstrapper-win32.exe"), &info, sizeof(MODULEINFO));
 		return info.SizeOfImage;
 	}
 
@@ -32,7 +32,7 @@ namespace signatures
 	{
 		const char* string_ptr = nullptr;
 		std::string mask(string.size(), 'x');
-		const auto base = reinterpret_cast<size_t>(GetModuleHandle(L"plutonium-bootstrapper-win32.exe"));
+		const auto base = reinterpret_cast<size_t>(GetModuleHandle("plutonium-bootstrapper-win32.exe"));
 		utils::hook::signature signature(base, get_image_size() - base);
 
 		signature.add({
@@ -42,7 +42,7 @@ namespace signatures
 			{
 				string_ptr = address;
 			}
-			});
+		});
 
 		signature.process();
 		return reinterpret_cast<size_t>(string_ptr);
@@ -50,7 +50,7 @@ namespace signatures
 
 	size_t find_string_ref(const std::string& string)
 	{
-		char bytes[4] = { 0 };
+		char bytes[4] = {0};
 		const auto string_ptr = find_string_ptr(string);
 		if (!string_ptr)
 		{
@@ -58,7 +58,7 @@ namespace signatures
 		}
 
 		std::memcpy(bytes, &string_ptr, sizeof(bytes));
-		return find_string_ptr({ bytes, 4 });
+		return find_string_ptr({bytes, 4});
 	}
 
 	bool process_maps()
