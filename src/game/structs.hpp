@@ -88,6 +88,7 @@ namespace game
 		SCRIPT_END = 8,
 		SCRIPT_FUNCTION = 9,
 		SCRIPT_STRUCT = 19,
+		SCRIPT_ENTITY = 21,
 		SCRIPT_ARRAY = 22,
 	};
 
@@ -302,6 +303,8 @@ namespace game
 		bool(__cdecl* domainFunc)(dvar_t*, DvarValue);
 		dvar_t* hashNext;
 	};
+
+	static_assert(offsetof(dvar_t, current.value) == 12);
 
 	struct hudelem_s
 	{

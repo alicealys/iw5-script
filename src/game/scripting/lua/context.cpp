@@ -209,7 +209,7 @@ namespace scripting::lua
 			const auto& method_map = *::game::plutonium::method_map_rev;
 			for (const auto& func : method_map)
 			{
-				const auto name = utils::string::to_lower(func.first);
+				const auto name = utils::string::to_lower(func.first.data());
 				entity_type[name.data()] = [name](const entity& entity, const sol::this_state s, sol::variadic_args va)
 				{
 					std::vector<script_value> arguments{};
@@ -464,7 +464,7 @@ namespace scripting::lua
 			const auto& function_map = *::game::plutonium::function_map_rev;
 			for (const auto& func : function_map)
 			{
-				const auto name = utils::string::to_lower(func.first);
+				const auto name = utils::string::to_lower(func.first.data());
 				game_type[name] = [name](const game&, const sol::this_state s, sol::variadic_args va)
 				{
 					std::vector<script_value> arguments{};
@@ -951,6 +951,12 @@ namespace scripting::lua
 	void context::notify(const event& e)
 	{
 		this->event_handler_.dispatch(e);
+	}
+
+	void context::handle_endon_conditions(const event& e)
+	{
+		this->scheduler_.dispatch(e);
+		this->event_handler_.handle_endon_conditions(e);
 	}
 
 	void context::load_script(const std::string& script)

@@ -85,12 +85,12 @@ namespace game
 
 	WEAK symbol<unsigned int> levelEntityId{0x208E1A4};
 	WEAK symbol<unsigned int> gameEntityId{0x208E1A8};
+	WEAK symbol<int> gameTime{0x1C6D980};
 
 	namespace plutonium
 	{
-		WEAK symbol<std::unordered_map<std::string, std::uint16_t>> function_map_rev{0};
-		WEAK symbol<std::unordered_map<std::string, std::uint16_t>> method_map_rev{0};
-		WEAK symbol<std::unordered_map<std::string, std::uint16_t>> file_map_rev{0};
+		WEAK symbol<std::unordered_map<std::string_view, std::uint16_t>> function_map_rev{0};
+		WEAK symbol<std::unordered_map<std::string_view, std::uint16_t>> method_map_rev{0};
 		WEAK symbol<std::unordered_map<std::string, std::uint16_t>> token_map_rev{0};
 		WEAK symbol<int(const char* fmt, ...)> printf{0};
 		WEAK symbol<void*> function_table{0};

@@ -74,6 +74,21 @@ namespace scripting
 
 			game::scr_VmPub->inparamcount = v7;
 		}
+
+		bool is_entity_variable(const game::scr_entref_t& entref, const unsigned int id)
+		{
+			const auto type = game::scr_VarGlob->objectVariableValue[id].w.type;
+			if (entref.classnum == 0)
+			{
+				return type == game::SCRIPT_ENTITY;
+			}
+			else if (entref.classnum > 0)
+			{
+				return true;
+			}
+
+			return false;
+		}
 	}
 
 	void push_value(const script_value& value)
@@ -100,6 +115,12 @@ namespace scripting
 		const std::vector<script_value>& arguments)
 	{
 		const auto entref = entity.get_entity_reference();
+		const auto ent_id = entity.get_entity_id();
+
+		if (!is_entity_variable(entref, ent_id))
+		{
+			return {};
+		}
 
 		const auto is_method_call = *reinterpret_cast<const int*>(&entref) != -1;
 		const auto function = find_function(name, !is_method_call);
@@ -158,18 +179,22 @@ namespace scripting
 
 	unsigned int get_function_pos(const std::string& filename, const std::string& function)
 	{
-		if (scripting::script_function_table.find(filename) == scripting::script_function_table.end())
+		const auto filename_lower = utils::string::to_lower(filename);
+		const auto function_lower = utils::string::to_lower(function);
+
+		if (!scripting::script_function_table.contains(filename_lower))
 		{
 			throw std::runtime_error("File '" + filename + "' not found");
 		};
 
-		const auto functions = scripting::script_function_table[filename];
-		if (functions.find(function) == functions.end())
+		const auto& functions = scripting::script_function_table[filename_lower];
+		const auto function_iter = functions.find(function_lower);
+		if (function_iter == functions.end())
 		{
 			throw std::runtime_error("Function '" + function + "' in file '" + filename + "' not found");
 		}
 
-		return functions.at(function);
+		return function_iter->second;
 	}
 
 	script_value call_script_function(const entity& entity, const std::string& filename,
@@ -179,53 +204,13 @@ namespace scripting
 		return exec_ent_thread(entity, pos, arguments);
 	}
 
-	static std::unordered_map<unsigned int, std::unordered_map<std::string, script_value>> custom_fields;
-
-	script_value get_custom_field(const entity& entity, const std::string& field)
-	{
-		auto fields = custom_fields[entity.get_entity_id()];
-		const auto _field = fields.find(field);
-		if (_field != fields.end())
-		{
-			return _field->second;
-		}
-		return {};
-	}
-
-	void set_custom_field(const entity& entity, const std::string& field, const script_value& value)
-	{
-		const auto id = entity.get_entity_id();
-
-		if (custom_fields[id].find(field) != custom_fields[id].end())
-		{
-			custom_fields[id][field] = value;
-			return;
-		}
-
-		custom_fields[id].insert(std::make_pair(field, value));
-	}
-
-	void clear_entity_fields(const entity& entity)
-	{
-		const auto id = entity.get_entity_id();
-
-		if (custom_fields.find(id) != custom_fields.end())
-		{
-			custom_fields[id].clear();
-		}
-	}
-
-	void clear_custom_fields()
-	{
-		custom_fields.clear();
-	}
-
 	void set_entity_field(const entity& entity, const std::string& field, const script_value& value)
 	{
 		const auto entref = entity.get_entity_reference();
 		const int id = get_field_id(entref.classnum, field);
+		const auto ent_id = entity.get_entity_id();
 
-		if (id != -1)
+		if (id != -1 && is_entity_variable(entref, ent_id))
 		{
 			stack_isolation _;
 			push_value(value);
@@ -240,7 +225,7 @@ namespace scripting
 		}
 		else
 		{
-			set_custom_field(entity, field, value);
+			set_object_variable(ent_id, field, value);
 		}
 	}
 
@@ -248,8 +233,9 @@ namespace scripting
 	{
 		const auto entref = entity.get_entity_reference();
 		const auto id = get_field_id(entref.classnum, field);
+		const auto ent_id = entity.get_entity_id();
 
-		if (id != -1)
+		if (id != -1 && is_entity_variable(entref, ent_id))
 		{
 			stack_isolation _;
 
@@ -266,12 +252,8 @@ namespace scripting
 
 			return value;
 		}
-		else
-		{
-			return get_custom_field(entity, field);
-		}
 
-		return {};
+		return get_object_variable(ent_id, field);
 	}
 
 	unsigned int make_array()
@@ -283,5 +265,48 @@ namespace scripting
 		variable->u.f.next = 0;
 
 		return index;
+	}
+
+	void set_object_variable(const unsigned int parent_id, const unsigned int id, const script_value& value)
+	{
+		const auto offset = 0xC800 * (parent_id & 1);
+		const auto variable_id = game::GetVariable(parent_id, id);
+		const auto variable = &game::scr_VarGlob->childVariableValue[variable_id + offset];
+		const auto& raw_value = value.get_raw();
+
+		game::AddRefToValue(raw_value.type, raw_value.u);
+		game::RemoveRefToValue(variable->type, variable->u.u);
+
+		variable->type = static_cast<char>(raw_value.type);
+		variable->u.u = raw_value.u;
+	}
+
+	void set_object_variable(const unsigned int parent_id, const std::string& name, const script_value& value)
+	{
+		const auto id = scripting::find_token_id(name);
+		set_object_variable(parent_id, id, value);
+	}
+
+	script_value get_object_variable(const unsigned int parent_id, const unsigned int id)
+	{
+		const auto offset = 0xC800 * (parent_id & 1);
+		const auto variable_id = game::FindVariable(parent_id, id);
+		if (!variable_id)
+		{
+			return {};
+		}
+
+		const auto variable = &game::scr_VarGlob->childVariableValue[variable_id + offset];
+		game::VariableValue value{};
+		value.type = static_cast<game::scriptType_e>(variable->type);
+		value.u = variable->u.u;
+
+		return value;
+	}
+
+	script_value get_object_variable(const unsigned int parent_id, const std::string& name)
+	{
+		const auto id = scripting::find_token_id(name);
+		return get_object_variable(parent_id, id);
 	}
 }

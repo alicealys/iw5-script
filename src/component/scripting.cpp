@@ -28,7 +28,12 @@ namespace scripting
 		utils::hook::detour scr_set_thread_position_hook;
 		utils::hook::detour process_script_hook;
 
+		utils::hook::detour scr_run_current_threads_hook;
+
 		std::string current_file;
+		
+		using notify_list = std::vector<event>;
+		utils::concurrency::container<notify_list> scheduled_notifies;
 
 		void vm_notify_stub(const unsigned int notify_list_owner_id, const unsigned int string_value,
 			                game::VariableValue* top)
@@ -51,35 +56,50 @@ namespace scripting
 					const auto entity = e.arguments[0].as<scripting::entity>();
 
 					notifies::clear_cmd_notifies(entity);
-					clear_entity_fields(entity);
 				}
 
-				lua::engine::notify(e);
+				lua::engine::handle_endon_conditions(e);
+
+				scheduled_notifies.access([&](notify_list& list)
+				{
+					list.push_back(e);
+				});
 			}
 
 			vm_notify_hook.invoke<void>(notify_list_owner_id, string_value, top);
 		}
 
-		void scr_add_class_field_stub(unsigned int classnum, unsigned int _name, unsigned int canonicalString, unsigned int offset)
+		void clear_scheduled_notifies()
 		{
-			const auto name = game::SL_ConvertToString(_name);
-
-			if (fields_table[classnum].find(name) == fields_table[classnum].end())
+			scheduled_notifies.access([](notify_list& list)
 			{
-				fields_table[classnum][name] = offset;
+				list.clear();
+			});
+		}
+
+		void scr_add_class_field_stub(unsigned int classnum, unsigned int name, 
+			unsigned int canonicalString, unsigned int offset)
+		{
+			const auto name_str = game::SL_ConvertToString(name);
+
+			if (fields_table[classnum].find(name_str) == fields_table[classnum].end())
+			{
+				fields_table[classnum][name_str] = offset;
 			}
 
-			scr_add_class_field_hook.invoke<void>(classnum, _name, canonicalString, offset);
+			scr_add_class_field_hook.invoke<void>(classnum, name, canonicalString, offset);
 		}
 
 		void scr_load_level_stub()
 		{
 			scr_load_level_hook.invoke<void>();
+			clear_scheduled_notifies();
 			lua::engine::start();
 		}
 
 		void g_shutdown_game_stub(const int free_scripts)
 		{
+			clear_scheduled_notifies();
 			lua::engine::stop();
 			g_shutdown_game_hook.invoke<void>(free_scripts);
 		}
@@ -108,6 +128,23 @@ namespace scripting
 
 			scr_set_thread_position_hook.invoke<void>(threadName, codePos);
 		}
+
+		void scr_run_current_threads_stub()
+		{
+			notify_list list_copy{};
+			scheduled_notifies.access([&](notify_list& list)
+			{
+				list_copy = list;
+				list.clear();
+			});
+
+			for (const auto& e : list_copy)
+			{
+				lua::engine::notify(e);
+			}
+
+			scr_run_current_threads_hook.invoke<void>();
+		}
 	}
 
 	class component final : public component_interface
@@ -123,6 +160,8 @@ namespace scripting
 
 			scr_set_thread_position_hook.create(0x5616D0, scr_set_thread_position_stub);
 			process_script_hook.create(0x56B130, process_script_stub);
+
+			scr_run_current_threads_hook.create(0x56E320, scr_run_current_threads_stub);
 
 			scheduler::loop([]()
 			{
