@@ -377,8 +377,13 @@ namespace notifies
 
 	void clear_cmd_notifies(const scripting::entity& entity)
 	{
-		const auto clientNum = entity.call("getentitynumber", {}).as<int>();
-		cmd_notifies[clientNum] = {};
+		const auto ref = entity.get_entity_reference();
+		cmd_notifies[ref.entnum] = {};
+	}
+
+	void clear_all_cmd_notifies()
+	{
+		cmd_notifies.clear();
 	}
 
 	void add_cmd_notify(int clientNum, const std::string& cmd, const std::string& notify)

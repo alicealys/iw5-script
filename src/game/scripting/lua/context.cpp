@@ -223,7 +223,7 @@ namespace scripting::lua
 				};
 			}
 
-			entity_type["notifyonplayercommand"] = [](const entity& entity, const sol::this_state s, const std::string& notify, const std::string& cmd)
+			entity_type["addcommandnotify"] = [](const entity& entity, const sol::this_state s, const std::string& notify, const std::string& cmd)
 			{
 				const auto entnum = entity.call("getentitynumber").as<int>();
 				notifies::add_cmd_notify(entnum, cmd, notify);

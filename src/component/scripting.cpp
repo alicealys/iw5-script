@@ -51,11 +51,9 @@ namespace scripting
 					e.arguments.emplace_back(*value);
 				}
 
-				if (e.name == "entitydeleted")
+				if (e.name == "disconnect")
 				{
-					const auto entity = e.arguments[0].as<scripting::entity>();
-
-					notifies::clear_cmd_notifies(entity);
+					notifies::clear_cmd_notifies(e.entity);
 				}
 
 				lua::engine::handle_endon_conditions(e);
@@ -94,12 +92,14 @@ namespace scripting
 		{
 			scr_load_level_hook.invoke<void>();
 			clear_scheduled_notifies();
+			notifies::clear_all_cmd_notifies();
 			lua::engine::start();
 		}
 
 		void g_shutdown_game_stub(const int free_scripts)
 		{
 			clear_scheduled_notifies();
+			notifies::clear_all_cmd_notifies();
 			lua::engine::stop();
 			g_shutdown_game_hook.invoke<void>(free_scripts);
 		}
