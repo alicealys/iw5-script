@@ -37,8 +37,7 @@ namespace notifies
 				return {};
 			}
 
-			const auto player = scripting::call("getEntByNum", {ent->entnum});
-
+			const auto player = scripting::call("getentbynum", {ent->entnum});
 			return scripting::lua::convert(state, player);
 		}
 
@@ -57,9 +56,7 @@ namespace notifies
 				return {};
 			}
 
-			const auto _vec = scripting::vector(vec);
-
-			return scripting::lua::convert(state, _vec);
+			return scripting::lua::convert(state, scripting::vector(vec));
 		}
 
 		std::string convert_mod(const int mod)
@@ -198,7 +195,7 @@ namespace notifies
 				{
 					const auto teamchat = _cmd == "say_team"s;
 					const scripting::entity level{*game::levelEntityId};
-					const auto _player = scripting::call("getEntByNum", {clientNum});
+					const auto _player = scripting::call("getentbynum", {clientNum});
 
 					if (_player.get_raw().type == game::SCRIPT_OBJECT)
 					{
@@ -212,7 +209,7 @@ namespace notifies
 
 				for (const auto& callback : player_say_callbacks)
 				{
-					const auto _player = scripting::call("getEntByNum", {clientNum}).as<scripting::entity>();
+					const auto _player = scripting::call("getentbynum", {clientNum}).as<scripting::entity>();
 					const auto result = callback(_player, message, _cmd == "say_team");
 
 					scripting::lua::handle_error(result);
