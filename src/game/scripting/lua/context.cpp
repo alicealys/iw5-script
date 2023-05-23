@@ -205,9 +205,9 @@ namespace scripting::lua
 			};
 
 			auto entity_type = state.new_usertype<entity>("entity");
+			const auto& gsc_ctx = *::game::plutonium::gsc_ctx;
 
-			const auto& method_map = *::game::plutonium::method_map_rev;
-			for (const auto& func : method_map)
+			for (const auto& func : gsc_ctx->meth_map())
 			{
 				const auto name = utils::string::to_lower(func.first.data());
 				entity_type[name.data()] = [name](const entity& entity, const sol::this_state s, sol::variadic_args va)
@@ -461,8 +461,7 @@ namespace scripting::lua
 			auto game_type = state.new_usertype<game>("game_");
 			state["game"] = game();
 
-			const auto& function_map = *::game::plutonium::function_map_rev;
-			for (const auto& func : function_map)
+			for (const auto& func : gsc_ctx->func_map())
 			{
 				const auto name = utils::string::to_lower(func.first.data());
 				game_type[name] = [name](const game&, const sol::this_state s, sol::variadic_args va)

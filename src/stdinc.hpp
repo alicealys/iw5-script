@@ -24,6 +24,8 @@
 #pragma warning(disable: 26812)
 #pragma warning(disable: 28020)
 
+#include <xsk/gsc/engine/iw5_pc.hpp>
+
 #define DLL_EXPORT extern "C" __declspec(dllexport)
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>

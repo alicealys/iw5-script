@@ -7,51 +7,20 @@ namespace scripting
 {
 	namespace
 	{
-		std::unordered_map<std::string, uint16_t> lowercase_map(
-			const std::unordered_map<std::string_view, uint16_t>& old_map)
-		{
-			std::unordered_map<std::string, uint16_t> new_map{};
-			for (auto& entry : old_map)
-			{
-				new_map[utils::string::to_lower(entry.first.data())] = entry.second;
-			}
-
-			return new_map;
-		}
-
-		const std::unordered_map<std::string, uint16_t>& get_methods()
-		{
-			static auto methods = lowercase_map(*game::plutonium::method_map_rev);
-			return methods;
-		}
-
-		const std::unordered_map<std::string, uint16_t>& get_functions()
-		{
-			static auto function = lowercase_map(*game::plutonium::function_map_rev);
-			return function;
-		}
-
-		int find_function_index(const std::string& name, const bool prefer_global)
+		int find_function_index(const std::string& name, [[maybe_unused]] const bool prefer_global)
 		{
 			const auto target = utils::string::to_lower(name);
+			auto const& first = (*game::plutonium::gsc_ctx)->func_map();
+			auto const& second = (*game::plutonium::gsc_ctx)->meth_map();
 
-			const auto& primary_map = prefer_global
-				                          ? get_functions()
-				                          : get_methods();
-			const auto& secondary_map = !prefer_global
-				                            ? get_functions()
-				                            : get_methods();
-
-			auto function_entry = primary_map.find(target);
-			if (function_entry != primary_map.end())
+			if (const auto itr = first.find(name); itr != first.end())
 			{
-				return function_entry->second;
+				return static_cast<int>(itr->second);
 			}
 
-			function_entry = secondary_map.find(target);
-			if (function_entry != secondary_map.end())
+			if (const auto itr = second.find(name); itr != second.end())
 			{
-				return function_entry->second;
+				return static_cast<int>(itr->second);
 			}
 
 			return -1;
@@ -62,7 +31,7 @@ namespace scripting
 			static const auto function_table = game::plutonium::function_table.get();
 			static const auto method_table = game::plutonium::method_table.get();
 
-			if (index < 0x8000)
+			if (index < 0x1C7)
 			{
 				return reinterpret_cast<script_function*>(function_table)[index];
 			}
@@ -73,16 +42,7 @@ namespace scripting
 
 	std::string find_token(unsigned int id)
 	{
-		const auto& token_map = *game::plutonium::token_map_rev;
-		for (const auto& token : token_map)
-		{
-			if (token.second == id)
-			{
-				return token.first;
-			}
-		}
-
-		return utils::string::va("_ID%i", id);
+		return (*game::plutonium::gsc_ctx)->token_name(id);
 	}
 
 	std::string find_file(unsigned int id)
@@ -92,15 +52,7 @@ namespace scripting
 
 	int find_token_id(const std::string& name)
 	{
-		const auto& token_map = *game::plutonium::token_map_rev;
-		const auto result = token_map.find(utils::string::to_lower(name));
-
-		if (result != token_map.end())
-		{
-			return result->second;
-		}
-
-		return game::SL_GetCanonicalString(name.data());
+		return (*game::plutonium::gsc_ctx)->token_id(name);
 	}
 
 	script_function find_function(const std::string& name, const bool prefer_global)

@@ -23,6 +23,8 @@ namespace game
 	WEAK symbol<const char*(int index)> Cmd_Argv{0x467600};
 
 	WEAK symbol<const dvar_t*(const char*)> Dvar_FindVar{0x5BDCC0};
+	WEAK symbol<dvar_t*(const char* dvarName, bool value, 
+		unsigned int flags, const char* description)> Dvar_RegisterBool{0x5BE9F0};
 
 	WEAK symbol<XAssetHeader(XAssetType type, const char* name, int allowCreateDefault)> DB_FindXAssetHeader{0x4CA620};
 
@@ -92,9 +94,7 @@ namespace game
 
 	namespace plutonium
 	{
-		WEAK symbol<std::unordered_map<std::string_view, std::uint16_t>> function_map_rev{0};
-		WEAK symbol<std::unordered_map<std::string_view, std::uint16_t>> method_map_rev{0};
-		WEAK symbol<std::unordered_map<std::string, std::uint16_t>> token_map_rev{0};
+		WEAK symbol<std::unique_ptr<xsk::gsc::iw5_pc::context>> gsc_ctx{0};
 		WEAK symbol<int(const char* fmt, ...)> printf{0};
 		WEAK symbol<void*> function_table{0};
 		WEAK symbol<void*> method_table{0};
