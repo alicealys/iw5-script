@@ -4,6 +4,7 @@
 
 #define SOL_ALL_SAFETIES_ON 1
 #define SOL_PRINT_ERRORS 0
+#pragma warning(disable: 5321)
 #include <sol/sol.hpp>
 
 #include "scheduler.hpp"

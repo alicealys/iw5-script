@@ -3,25 +3,17 @@
 
 #include "component/signatures.hpp"
 
+#include "plugin.hpp"
+
+PLUTONIUM_API plutonium::sdk::plugin* PLUTONIUM_CALLBACK on_initialize()
+{
+    return plugin::get();
+}
+
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
     if (ul_reason_for_call == DLL_PROCESS_ATTACH)
     {
-        if (!signatures::process())
-        {
-            MessageBoxA(NULL,
-                "This version of iw5-script is outdated.\n" \
-                "Download the latest dll from here: https://github.com/fedddddd/iw5-script/releases",
-                "ERROR", MB_ICONERROR);
-
-            return FALSE;
-        }
-
-        if (game::plutonium::printf.get() != nullptr)
-        {
-            utils::hook::jump(reinterpret_cast<uintptr_t>(&printf), game::plutonium::printf);
-        }
-
         component_loader::post_unpack();
     }
 
